@@ -67,8 +67,17 @@ class ProjectTaskController extends Controller
             $settings = Utility::settings();
             $stages = TaskStage::orderBy('order')->where('created_by', \Auth::user()->creatorId())->get()->pluck('name','id');
             $stages->prepend(__('Select task stage'), '');
+            $issue_types = \App\Models\IssueType::where('is_active', true)->orderBy('order')->get();
 
-            return view('project_task.create', compact('project_id', 'stages', 'project', 'hrs','settings'));
+            // Get potential parent tasks (Epics and Stories for hierarchy)
+            $parent_tasks = ProjectTask::where('project_id', $project_id)
+                ->whereHas('issueType', function($query) {
+                    $query->where('is_subtask', false);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('project_task.create', compact('project_id', 'stages', 'project', 'hrs','settings', 'issue_types', 'parent_tasks'));
         }
         else
         {
@@ -87,6 +96,7 @@ class ProjectTaskController extends Controller
                                 'estimated_hrs' => 'required',
                                 'priority' => 'required',
                                 'stage_id' => 'required',
+                                'issue_type_id' => 'required|exists:issue_types,id',
                             ]
             );
 
@@ -371,8 +381,18 @@ class ProjectTaskController extends Controller
             $hrs     = Project::projectHrs($project_id);
             $stages = TaskStage::orderBy('order')->where('created_by', \Auth::user()->creatorId())->get()->pluck('name','id');
             $stages->prepend(__('Select task stage'), '');
+            $issue_types = \App\Models\IssueType::where('is_active', true)->orderBy('order')->get();
 
-            return view('project_task.edit', compact('project', 'task', 'hrs', 'stages'));
+            // Get potential parent tasks (exclude self and descendants)
+            $parent_tasks = ProjectTask::where('project_id', $project_id)
+                ->where('id', '!=', $task_id)
+                ->whereHas('issueType', function($query) {
+                    $query->where('is_subtask', false);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('project_task.edit', compact('project', 'task', 'hrs', 'stages', 'issue_types', 'parent_tasks'));
         }
         else
         {
@@ -391,6 +411,7 @@ class ProjectTaskController extends Controller
                                 'estimated_hrs' => 'required',
                                 'priority' => 'required',
                                 'stage_id' => 'required',
+                                'issue_type_id' => 'required|exists:issue_types,id',
                             ]
             );
 

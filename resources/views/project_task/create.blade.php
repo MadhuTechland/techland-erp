@@ -22,6 +22,38 @@
         </div>
         <div class="col-6">
             <div class="form-group">
+                {{ Form::label('issue_type_id', __('Issue Type'),['class' => 'form-label']) }}<x-required></x-required>
+                <select class="form-control select" name="issue_type_id" id="issue_type_id" required>
+                    <option value="">{{__('Select Issue Type')}}</option>
+                    @foreach($issue_types as $type)
+                        <option value="{{ $type->id }}" data-icon="{{ $type->icon }}" data-color="{{ $type->color }}">
+                            {{ __($type->name) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-6" id="parent_task_container" style="display: none;">
+            <div class="form-group">
+                {{ Form::label('parent_id', __('Parent Epic/Story'),['class' => 'form-label']) }}
+                <select class="form-control select" name="parent_id" id="parent_id">
+                    <option value="">{{__('None (Top Level)')}}</option>
+                    @foreach($parent_tasks as $parent)
+                        <option value="{{ $parent->id }}" data-type="{{ $parent->issue_type_id }}">
+                            {{ $parent->issue_key }} - {{ $parent->name }}
+                            @if($parent->issueType)
+                                ({{ $parent->issueType->name }})
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+                <div class="text-xs mt-1 text-muted">
+                    {{ __('Select parent Epic or Story for this item') }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="form-group">
                 {{ Form::label('milestone_id', __('Milestone'),['class' => 'form-label']) }}
                 <select class="form-control select" name="milestone_id" id="milestone_id">
                     <option value="0" class="text-muted">{{__('Select Milestone')}}</option>
@@ -129,3 +161,73 @@
 </div>
 {{Form::close()}}
 
+<script>
+$(document).ready(function() {
+    // Check URL parameters for parent and type (coming from "Add Sub-task" button)
+    const urlParams = new URLSearchParams(window.location.search);
+    const parentId = urlParams.get('parent');
+    const issueType = urlParams.get('type');
+
+    if (parentId && issueType === 'subtask') {
+        // Select Sub-task issue type
+        $('#issue_type_id option').each(function() {
+            if ($(this).text().trim() === 'Sub-task') {
+                $(this).prop('selected', true);
+            }
+        });
+        // Show and select parent
+        $('#parent_task_container').show();
+        $('#parent_id').val(parentId);
+        // Trigger change to filter options
+        $('#issue_type_id').trigger('change');
+    }
+
+    // Show/hide parent selector based on issue type
+    $('#issue_type_id').on('change', function() {
+        var selectedOption = $(this).find('option:selected');
+        var selectedText = selectedOption.text().trim();
+
+        // Show parent selector for Story, Task, Bug, Sub-task (not for Epic)
+        if(selectedText === 'Story' || selectedText === 'Task' || selectedText === 'Bug' || selectedText === 'Sub-task') {
+            $('#parent_task_container').show();
+
+            // Filter parent options based on hierarchy rules
+            if(selectedText === 'Story') {
+                // Stories can be under Epics
+                $('#parent_id option').each(function() {
+                    var optionText = $(this).text();
+                    if(optionText.includes('(Epic)') || optionText === 'None (Top Level)') {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            } else if(selectedText === 'Sub-task') {
+                // Sub-tasks can be under Stories, Epics, or Tasks
+                $('#parent_id option').each(function() {
+                    var optionText = $(this).text();
+                    if(optionText.includes('(Story)') || optionText.includes('(Epic)') || optionText.includes('(Task)') || optionText === 'None (Top Level)') {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            } else if(selectedText === 'Task' || selectedText === 'Bug') {
+                // Tasks/Bugs can be under Stories or Epics (not under other tasks)
+                $('#parent_id option').each(function() {
+                    var optionText = $(this).text();
+                    if(optionText.includes('(Story)') || optionText.includes('(Epic)') || optionText === 'None (Top Level)') {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+        } else {
+            // Epic or nothing selected - hide parent selector
+            $('#parent_task_container').hide();
+            $('#parent_id').val('');
+        }
+    });
+});
+</script>

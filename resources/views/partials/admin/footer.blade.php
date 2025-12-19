@@ -17,6 +17,20 @@
 
 <!-- Required Js -->
 <script src="{{ asset('js/jquery.min.js') }}"></script>
+<script>
+// Block external license verification calls
+(function() {
+    var originalGetScript = $.getScript;
+    $.getScript = function(url, callback) {
+        if (url && (url.indexOf('envato.workdo.io') !== -1 || url.indexOf('verify.js') !== -1)) {
+            console.log('External verification blocked');
+            if (typeof callback === 'function') callback();
+            return $.Deferred().resolve();
+        }
+        return originalGetScript.apply(this, arguments);
+    };
+})();
+</script>
 <script src="{{ asset('assets/js/plugins/popper.min.js') }}"></script>
 <script src="{{ asset('assets/js/plugins/perfect-scrollbar.min.js') }}"></script>
 <script src="{{ asset('assets/js/plugins/simplebar.min.js') }}"></script>

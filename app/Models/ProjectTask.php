@@ -30,6 +30,9 @@ class ProjectTask extends Model
         'is_complete',
         'marked_at',
         'progress',
+        'issue_type_id',
+        'issue_key',
+        'parent_id',
     ];
 
     public static $priority = [
@@ -221,5 +224,66 @@ class ProjectTask extends Model
     public function timesheets()
     {
         return $this->hasMany('App\Models\Timesheet', 'task_id', 'id')->orderBy('id', 'desc');
+    }
+
+    public function issueType()
+    {
+        return $this->belongsTo('App\Models\IssueType', 'issue_type_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo('App\Models\ProjectTask', 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany('App\Models\ProjectTask', 'parent_id')->orderBy('order', 'asc');
+    }
+
+    public function subtasks()
+    {
+        return $this->children();
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($task) {
+            if (empty($task->issue_key)) {
+                $task->issue_key = static::generateIssueKey($task);
+            }
+        });
+    }
+
+    public static function generateIssueKey($task)
+    {
+        $project = Project::find($task->project_id);
+        if (!$project) {
+            return null;
+        }
+
+        $projectKey = strtoupper(substr($project->project_name, 0, 3));
+        $projectKey = preg_replace('/[^A-Z0-9]/', '', $projectKey);
+
+        if (strlen($projectKey) < 2) {
+            $projectKey = 'PRJ';
+        }
+
+        $lastTask = static::where('project_id', $task->project_id)
+            ->whereNotNull('issue_key')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastTask && $lastTask->issue_key) {
+            preg_match('/\d+$/', $lastTask->issue_key, $matches);
+            if (!empty($matches)) {
+                $nextNumber = intval($matches[0]) + 1;
+            }
+        }
+
+        return $projectKey . '-' . $nextNumber;
     }
 }

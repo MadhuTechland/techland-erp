@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(dir /b \"C:\\\\xampp\\\\htdocs\\\\techland-erp\\\\bootstrap\")",
+      "Bash(mysql:*)",
+      "Bash(\"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\":*)",
+      "Bash(find:*)",
+      "Bash(\"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root techland_erp -e \"SELECT * FROM settings WHERE value LIKE ''%envato%'' OR value LIKE ''%workdo%'' OR value LIKE ''%verify%'' OR name LIKE ''%script%'' LIMIT 10;\")",
+      "Bash(dir /b \"C:\\\\xampp\\\\htdocs\\\\techland-erp\\\\public\\\\js\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

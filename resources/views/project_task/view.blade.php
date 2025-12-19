@@ -1,7 +1,39 @@
 <div class="modal-body task-id" id="{{$task->id}}">
     <div class="card">
         <div class="card-body">
-            <h5> {{__('Task Detail')}}</h5>
+            <div class="mb-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0">{{__('Task Detail')}}</h5>
+                    <div class="d-flex gap-2">
+                        @if($task->issue_key)
+                            <span class="badge bg-secondary fs-6">{{ $task->issue_key }}</span>
+                        @endif
+                        @if($task->issueType)
+                            <span class="badge bg-{{ $task->issueType->color }} fs-6">
+                                <i class="{{ $task->issueType->icon }}"></i> {{ $task->issueType->name }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                @if($task->parent)
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="ti ti-arrow-up"></i> {{__('Parent')}}:
+                            <span class="badge bg-{{ $task->parent->issueType ? $task->parent->issueType->color : 'secondary' }}">
+                                {{ $task->parent->issue_key }}
+                            </span>
+                            {{ $task->parent->name }}
+                        </small>
+                    </div>
+                @endif
+                @if($task->children && $task->children->count() > 0)
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="ti ti-arrow-down"></i> {{__('Subtasks')}}: {{ $task->children->count() }}
+                        </small>
+                    </div>
+                @endif
+            </div>
             <div class="row  mt-4">
                 <div class="col-md-4 col-sm-6">
                     <div class="d-flex align-items-start">
@@ -44,6 +76,62 @@
             </div>
 
 
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-3 align-items-center">
+                <div class="col-6">
+                    <h5><i class="ti ti-subtask"></i> {{__('Sub-tasks')}}
+                    @if($task->children && $task->children->count() > 0)
+                        ({{ $task->children->count() }})
+                    @endif
+                    </h5>
+                </div>
+                <div class="col-6">
+                    <div class="float-end">
+                        <a href="#" data-size="lg" data-url="{{ route('projects.tasks.create', $task->project_id) }}?parent={{ $task->id }}&type=subtask" data-ajax-popup="true" data-bs-toggle="tooltip" title="{{__('Create Sub-task')}}" class="btn btn-sm btn-primary">
+                            <i class="ti ti-plus"></i> {{__('Add Sub-task')}}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @if($task->children && $task->children->count() > 0)
+            <div class="list-group">
+                @foreach($task->children as $subtask)
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                @if($subtask->issueType)
+                                    <span class="badge bg-{{ $subtask->issueType->color }}">
+                                        <i class="{{ $subtask->issueType->icon }}"></i>
+                                    </span>
+                                @endif
+                                <span class="text-muted small">{{ $subtask->issue_key }}</span>
+                                <a href="#" class="dashboard-link" data-url="{{ route('projects.tasks.show', [$task->project_id, $subtask->id]) }}" data-ajax-popup="true" data-size="lg">
+                                    {{ $subtask->name }}
+                                </a>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                @if($subtask->stage)
+                                    <span class="badge" style="background-color: {{ $subtask->stage->color }};">
+                                        {{ $subtask->stage->name }}
+                                    </span>
+                                @endif
+                                @if($subtask->is_complete)
+                                    <i class="ti ti-check text-success"></i>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            @else
+                <div class="text-center text-muted py-3">
+                    <i class="ti ti-subtask" style="font-size: 2rem;"></i>
+                    <p>{{__('No sub-tasks yet. Click "Add Sub-task" to create one.')}}</p>
+                </div>
+            @endif
         </div>
     </div>
     <div class="card">
