@@ -7,266 +7,360 @@
     <link rel="stylesheet" href="{{ asset('css/summernote/summernote-bs4.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/plugins/dragula.min.css') }}" id="main-style-link">
     <style>
-        /* JIRA-like Premium Glassy UI */
+        /* ===== JIRA-STYLE COMPACT KANBAN ===== */
+
+        /* Board container */
         .kanban-wrapper {
-            padding: 10px 0;
+            padding: 0;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            align-items: flex-start;
         }
 
-        /* Glassy Card Columns */
+        .kanban-wrapper > .col {
+            flex: 0 0 260px;
+            max-width: 260px;
+            min-width: 260px;
+            padding: 0 4px;
+        }
+
+        /* Column styling */
         .crm-sales-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .crm-sales-card:hover {
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
+            background: #f4f5f7;
+            border: none;
+            border-radius: 3px;
+            box-shadow: none;
         }
 
         .crm-sales-card .card-header {
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 12px 16px;
-            border-radius: 12px 12px 0 0;
+            background: transparent;
+            border-bottom: none;
+            padding: 8px 8px 4px;
+            min-height: auto;
         }
 
-        /* Compact JIRA-style Cards */
+        .crm-sales-card .card-header h4 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #5e6c84;
+            letter-spacing: 0.04em;
+            margin: 0;
+        }
+
+        /* Task count badge */
+        .count {
+            background: transparent;
+            padding: 0;
+            font-size: 11px;
+            font-weight: 500;
+            color: #5e6c84;
+        }
+
+        /* Kanban box / task container */
+        .kanban-box {
+            min-height: 40px;
+            padding: 0 4px 4px;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+        }
+
+        .kanban-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .kanban-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .kanban-box::-webkit-scrollbar-thumb {
+            background: #c1c7d0;
+            border-radius: 3px;
+        }
+
+        /* ===== TASK CARDS - JIRA STYLE ===== */
         .sales-item {
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            cursor: grab;
-            overflow: hidden;
+            background: #fff;
+            border-radius: 3px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 0 rgba(9,30,66,.13);
+            border: none;
+            cursor: pointer;
+            transition: background 85ms ease-in, box-shadow 85ms ease-in;
         }
 
         .sales-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-            transform: translateY(-3px) scale(1.01);
-            border-color: rgba(0, 0, 0, 0.1);
+            background: #f4f5f7;
+            box-shadow: 0 1px 0 rgba(9,30,66,.25);
+            transform: none;
         }
 
-        .sales-item:active {
-            cursor: grabbing;
-        }
-
-        /* Dragging state */
+        /* Dragging states */
         .gu-mirror {
             cursor: grabbing !important;
-            opacity: 0.9;
-            transform: rotate(3deg);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+            opacity: 1;
+            transform: rotate(2deg);
+            box-shadow: 0 8px 16px -4px rgba(9,30,66,.25), 0 0 0 1px rgba(9,30,66,.08) !important;
         }
 
         .gu-transit {
-            opacity: 0.3;
+            opacity: 0.4;
         }
 
-        /* Card sections - more compact */
+        .gu-over {
+            background: #e4f0f6 !important;
+        }
+
+        /* Card sections - ultra compact */
         .sales-item-top {
-            padding: 10px 12px 8px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 6px 8px 4px;
+            border-bottom: none !important;
         }
 
         .sales-item-top h5 {
-            font-size: 14px;
-            font-weight: 600;
-            line-height: 1.4;
-            margin: 0;
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 1.3;
+            margin: 0 0 4px 0;
+            color: #172b4d;
         }
 
         .sales-item-top h5 a {
             color: #172b4d;
             text-decoration: none;
-            transition: color 0.2s;
         }
 
         .sales-item-top h5 a:hover {
             color: #0052cc;
+            text-decoration: underline;
         }
 
-        .sales-item-center {
-            padding: 8px 12px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        /* Badge container */
+        .badge-wrp {
+            margin-top: 4px;
         }
 
-        .sales-item-bottom {
-            padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.01);
-        }
-
-        /* Badge improvements */
         .badge-wrp .badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-transform: none;
+            letter-spacing: 0;
         }
 
-        /* Icon badges - more compact */
+        /* Issue key badge */
+        .badge-wrp .badge.bg-secondary {
+            background: #dfe1e6 !important;
+            color: #42526e !important;
+            box-shadow: none;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* Center section - minimal */
+        .sales-item-center {
+            padding: 4px 8px;
+            border-bottom: none !important;
+        }
+
+        .sales-item-center ul {
+            margin: 0;
+            padding: 0;
+            gap: 4px !important;
+        }
+
         .sales-item-center li,
         .sales-item-bottom li {
-            font-size: 12px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(0, 0, 0, 0.06);
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 2px;
+            background: transparent;
+            border: none;
+            color: #5e6c84;
         }
 
         .sales-item-center li i,
         .sales-item-bottom li i {
+            font-size: 12px;
+            color: #6b778c;
+        }
+
+        /* Date styling */
+        .sales-item-center span[data-bs-toggle="tooltip"] {
+            font-size: 10px;
+            padding: 1px 4px;
+            background: transparent;
+            border: none;
+            color: #5e6c84;
+        }
+
+        .sales-item-center .text-danger {
+            color: #de350b !important;
+            background: #ffebe6;
+            border-radius: 2px;
+            padding: 1px 4px;
+            font-weight: 500;
+        }
+
+        /* Bottom section */
+        .sales-item-bottom {
+            padding: 4px 8px 6px;
+            background: transparent;
+        }
+
+        .sales-item-bottom ul {
+            gap: 4px !important;
+        }
+
+        /* User avatars - smaller */
+        .user-group img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            margin-left: -6px;
+            border: 1.5px solid #fff;
+        }
+
+        .user-group img:first-child {
+            margin-left: 0;
+        }
+
+        /* Menu button */
+        .btn-group.card-option {
+            opacity: 0;
+            transition: opacity 85ms;
+        }
+
+        .sales-item:hover .btn-group.card-option {
+            opacity: 1;
+        }
+
+        .btn-group.card-option button {
+            padding: 2px 4px;
             font-size: 14px;
+            color: #6b778c;
         }
 
-        /* Avatar improvements */
-        .avatar-group .avatar {
-            width: 28px;
-            height: 28px;
-            border: 2px solid white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        .btn-group.card-option button:hover {
+            color: #172b4d;
+            transform: none;
         }
 
-        /* Glassy filter card */
-        .card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Smooth animations for drag and drop */
-        .kanban-box {
-            min-height: 100px;
-            transition: background-color 0.3s;
-        }
-
-        .gu-over {
-            background: rgba(0, 82, 204, 0.05) !important;
-            border-radius: 8px;
-        }
-
-        /* Priority colors with glass effect */
+        /* Priority badges - Jira style */
         .badge.bg-light-danger {
-            background: rgba(220, 53, 69, 0.1) !important;
-            color: #dc3545 !important;
-            border: 1px solid rgba(220, 53, 69, 0.2);
+            background: #ffebe6 !important;
+            color: #de350b !important;
+            border: none;
         }
 
         .badge.bg-light-warning {
-            background: rgba(255, 193, 7, 0.1) !important;
-            color: #d39e00 !important;
-            border: 1px solid rgba(255, 193, 7, 0.2);
+            background: #fff3cd !important;
+            color: #974f0c !important;
+            border: none;
         }
 
         .badge.bg-light-primary {
-            background: rgba(13, 110, 253, 0.1) !important;
-            color: #0d6efd !important;
-            border: 1px solid rgba(13, 110, 253, 0.2);
+            background: #deebff !important;
+            color: #0747a6 !important;
+            border: none;
         }
 
         .badge.bg-light-info {
-            background: rgba(13, 202, 240, 0.1) !important;
-            color: #0dcaf0 !important;
-            border: 1px solid rgba(13, 202, 240, 0.2);
+            background: #e6fcff !important;
+            color: #008da6 !important;
+            border: none;
         }
 
-        /* Issue type badges - glassy effect */
+        /* Issue type badges - Jira colors */
         .badge.bg-purple {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            background: #6554c0 !important;
+            box-shadow: none;
         }
 
         .badge.bg-success {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
-            box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
+            background: #36b37e !important;
+            box-shadow: none;
         }
 
         .badge.bg-primary {
-            background: linear-gradient(135deg, #0052cc 0%, #0065ff 100%) !important;
-            box-shadow: 0 2px 8px rgba(0, 82, 204, 0.3);
+            background: #0065ff !important;
+            box-shadow: none;
         }
 
         .badge.bg-danger {
-            background: linear-gradient(135deg, #eb3b5a 0%, #fc5c65 100%) !important;
-            box-shadow: 0 2px 8px rgba(235, 59, 90, 0.3);
+            background: #ff5630 !important;
+            box-shadow: none;
         }
 
         .badge.bg-info {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
-        }
-
-        .badge.bg-secondary {
-            background: linear-gradient(135deg, #5f6368 0%, #8e9196 100%) !important;
-            box-shadow: 0 2px 8px rgba(95, 99, 104, 0.3);
+            background: #00b8d9 !important;
+            box-shadow: none;
         }
 
         /* Parent indicator */
         .sales-item-top .ti-arrow-badge-up {
-            color: #6c757d;
-            opacity: 0.7;
-            transition: opacity 0.2s;
+            color: #6b778c;
+            font-size: 12px;
         }
 
-        .sales-item:hover .ti-arrow-badge-up {
-            opacity: 1;
+        /* Filter card - compact */
+        .card {
+            background: #fff;
+            border: 1px solid #dfe1e6;
+            box-shadow: none;
+            border-radius: 3px;
         }
 
-        /* Micro-interactions */
-        .btn-group.card-option button {
-            transition: all 0.2s;
+        .card .card-body {
+            padding: 10px 12px;
         }
 
-        .btn-group.card-option button:hover {
-            transform: scale(1.1);
-            color: #0052cc;
-        }
-
-        /* Smooth scrolling for horizontal scroll */
-        .horizontal-scroll-cards {
-            scroll-behavior: smooth;
-        }
-
-        /* Loading animation */
-        @keyframes shimmer {
-            0% {
-                background-position: -1000px 0;
-            }
-            100% {
-                background-position: 1000px 0;
-            }
-        }
-
-        /* Date badge */
-        .sales-item-center span[data-bs-toggle="tooltip"] {
+        .card .form-label {
             font-size: 11px;
-            padding: 3px 8px;
-            background: rgba(0, 0, 0, 0.03);
-            border-radius: 4px;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .text-danger {
-            color: #eb3b5a !important;
             font-weight: 600;
+            text-transform: uppercase;
+            color: #5e6c84;
+            margin-bottom: 4px;
         }
 
-        /* Column header count */
-        .count {
-            background: rgba(0, 0, 0, 0.05);
-            padding: 4px 10px;
-            border-radius: 12px;
+        .card .form-control {
             font-size: 13px;
-            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 3px;
+            border: 1px solid #dfe1e6;
+        }
+
+        .card .form-control:focus {
+            border-color: #4c9aff;
+            box-shadow: 0 0 0 1px #4c9aff;
+        }
+
+        /* Dropdown menu */
+        .dropdown-menu {
+            font-size: 13px;
+            border-radius: 3px;
+            box-shadow: 0 4px 8px -2px rgba(9,30,66,.25), 0 0 1px rgba(9,30,66,.31);
+            border: none;
+        }
+
+        .dropdown-item {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .dropdown-item i {
+            font-size: 14px;
+            margin-right: 6px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .kanban-wrapper > .col {
+                flex: 0 0 240px;
+                min-width: 240px;
+            }
         }
     </style>
 @endpush
@@ -760,14 +854,13 @@
 @endsection
 
 @section('content')
-    <div class="row mb-3">
+    <div class="row mb-2">
         <div class="col-sm-12">
-            <div class="card">
-                <div class="card-body">
+            <div class="card" style="margin-bottom: 8px;">
+                <div class="card-body py-2 px-3">
                     <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <label class="form-label">{{__('Filter by Issue Type')}}</label>
-                            <select class="form-control" id="issue_type_filter">
+                        <div class="col-auto">
+                            <select class="form-control form-control-sm" id="issue_type_filter" style="width: 160px; font-size: 12px;">
                                 <option value="">{{__('All Types')}}</option>
                                 @foreach(\App\Models\IssueType::where('is_active', true)->orderBy('order')->get() as $type)
                                     <option value="{{ $type->id }}">{{ $type->name }}</option>
@@ -786,20 +879,20 @@
                 @foreach ($stages as $stage)
                     @php($tasks = $stage->tasks)
                     <div class="col">
-                        <div class="crm-sales-card mb-4">
-                            <div class="card-header d-flex align-items-center justify-content-between gap-3">
-                                <h4 class="mb-0">{{ $stage->name }}</h4>
-                                <span class="f-w-600 count">{{ count($tasks) }}</span>
+                        <div class="crm-sales-card">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h4>{{ $stage->name }}</h4>
+                                <span class="count">{{ count($tasks) }}</span>
                             </div>
                             <div class="sales-item-wrp kanban-box" id="task-list-{{ $stage->id }}"
                                 data-status="{{ $stage->id }}">
                                 @foreach ($tasks as $taskDetail)
                                     <div class="sales-item draggable-item" id="{{ $taskDetail->id }}">
-                                        <div class="sales-item-top border-bottom">
-                                            <div class="d-flex align-items-center">
-                                                <h5 class="mb-0 flex-1">
+                                        <div class="sales-item-top">
+                                            <div class="d-flex align-items-start justify-content-between">
+                                                <h5 class="flex-1">
                                                     @if($taskDetail->parent)
-                                                        <span class="text-muted small me-1" data-bs-toggle="tooltip" title="{{ __('Parent: ') . $taskDetail->parent->issue_key }}">
+                                                        <span class="me-1" data-bs-toggle="tooltip" title="{{ __('Parent: ') . $taskDetail->parent->issue_key }}">
                                                             <i class="ti ti-arrow-badge-up"></i>
                                                         </span>
                                                     @endif
@@ -814,101 +907,83 @@
                                                         aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </button>
-
-                                                    <div
-                                                        class="dropdown-menu icon-dropdown icon-dropdown dropdown-menu-end">
+                                                    <div class="dropdown-menu dropdown-menu-end">
                                                         @can('view project task')
                                                             <a href="#!" data-size="md"
                                                                 data-url="{{ route('projects.tasks.show', [$project->id, $taskDetail->id]) }}"
                                                                 data-ajax-popup="true" class="dropdown-item"
                                                                 data-bs-original-title="{{ __('View') }}">
-                                                                <i class="ti ti-eye"></i>
-                                                                <span>{{ __('View') }}</span>
+                                                                <i class="ti ti-eye"></i>{{ __('View') }}
                                                             </a>
                                                         @endcan
                                                         @can('edit project task')
                                                             <a href="#!" data-size="lg"
                                                                 data-url="{{ route('projects.tasks.edit', [$project->id, $taskDetail->id]) }}"
                                                                 data-ajax-popup="true" class="dropdown-item"
-                                                                data-bs-original-title="{{ __('Edit ') . $taskDetail->name }}">
-                                                                <i class="ti ti-pencil"></i>
-                                                                <span>{{ __('Edit') }}</span>
+                                                                data-bs-original-title="{{ __('Edit') }}">
+                                                                <i class="ti ti-pencil"></i>{{ __('Edit') }}
                                                             </a>
                                                         @endcan
                                                         @can('delete project task')
                                                             {!! Form::open(['method' => 'DELETE', 'route' => ['projects.tasks.destroy', [$project->id, $taskDetail->id]]]) !!}
                                                             <a href="#!" class="dropdown-item bs-pass-para">
-                                                                <i class="ti ti-trash"></i>
-                                                                <span> {{ __('Delete') }} </span>
+                                                                <i class="ti ti-trash"></i>{{ __('Delete') }}
                                                             </a>
                                                             {!! Form::close() !!}
                                                         @endcan
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="badge-wrp d-flex flex-wrap align-items-center gap-2">
+                                            <div class="badge-wrp d-flex flex-wrap align-items-center gap-1 mt-1">
                                                 @if($taskDetail->issue_key)
-                                                    <span class="badge p-2 bg-secondary rounded text-md f-w-600">
-                                                        {{ $taskDetail->issue_key }}
-                                                    </span>
+                                                    <span class="badge bg-secondary">{{ $taskDetail->issue_key }}</span>
                                                 @endif
                                                 @if($taskDetail->issueType)
-                                                    <span class="badge p-2 bg-{{ $taskDetail->issueType->color }} rounded text-md f-w-600" data-issue-type-id="{{ $taskDetail->issueType->id }}">
+                                                    <span class="badge bg-{{ $taskDetail->issueType->color }}" data-issue-type-id="{{ $taskDetail->issueType->id }}">
                                                         <i class="{{ $taskDetail->issueType->icon }}"></i> {{ $taskDetail->issueType->name }}
                                                     </span>
                                                 @endif
-                                                <span
-                                                    class="badge p-2 bg-light-{{ \App\Models\ProjectTask::$priority_color[$taskDetail->priority] }} rounded text-md f-w-600">
-                                                    {{ __(\App\Models\ProjectTask::$priority[$taskDetail->priority]) }}</span>
+                                                <span class="badge bg-light-{{ \App\Models\ProjectTask::$priority_color[$taskDetail->priority] }}">
+                                                    {{ __(\App\Models\ProjectTask::$priority[$taskDetail->priority]) }}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div
-                                            class="sales-item-center border-bottom d-flex align-items-center justify-content-between">
-                                            <ul class="d-flex flex-wrap align-items-center gap-2 p-0 m-0">
+                                        <div class="sales-item-center d-flex align-items-center justify-content-between">
+                                            <ul class="d-flex flex-wrap align-items-center gap-1 p-0 m-0">
                                                 @if($taskDetail->children && $taskDetail->children->count() > 0)
-                                                    <li class="d-inline-flex align-items-center gap-1 p-1 px-2 border rounded-1"
-                                                        data-bs-toggle="tooltip" title="{{ __('Sub-tasks') }}">
-                                                        <i class="f-16 ti ti-subtask"></i>
-                                                        {{ $taskDetail->children->where('is_complete', 1)->count() }}/{{ $taskDetail->children->count() }}
+                                                    <li class="d-inline-flex align-items-center gap-1" data-bs-toggle="tooltip" title="{{ __('Sub-tasks') }}">
+                                                        <i class="ti ti-subtask"></i>{{ $taskDetail->children->where('is_complete', 1)->count() }}/{{ $taskDetail->children->count() }}
                                                     </li>
                                                 @endif
-                                                @if($taskDetail->parent)
-                                                    <li class="d-inline-flex align-items-center gap-1 p-1 px-2 border rounded-1"
-                                                        data-bs-toggle="tooltip" title="{{ __('Has Parent') }}">
-                                                        <i class="f-16 ti ti-link"></i>
+                                                @if(count($taskDetail->taskFiles) > 0)
+                                                    <li class="d-inline-flex align-items-center gap-1" data-bs-toggle="tooltip" title="{{ __('Files') }}">
+                                                        <i class="ti ti-file"></i>{{ count($taskDetail->taskFiles) }}
                                                     </li>
                                                 @endif
-                                                <li class="d-inline-flex align-items-center gap-1 p-1 px-2 border rounded-1"
-                                                    data-bs-toggle="tooltip" title="{{ __('Files') }}">
-                                                    <i class="f-16 ti ti-file"></i>
-                                                    {{ count($taskDetail->taskFiles) }}
-                                                </li>
                                                 @if (str_replace('%', '', $taskDetail->taskProgress($taskDetail)['percentage']) > 0)
-                                                    <li class="d-inline-flex align-items-center gap-1 p-1 px-2 border rounded-1"
-                                                        data-bs-toggle="tooltip" title="{{ __('Task Progress') }}">
-                                                        <span
-                                                            class="text-md">{{ $taskDetail->taskProgress($taskDetail)['percentage'] }}</span>
+                                                    <li class="d-inline-flex align-items-center gap-1" data-bs-toggle="tooltip" title="{{ __('Progress') }}">
+                                                        {{ $taskDetail->taskProgress($taskDetail)['percentage'] }}
                                                     </li>
                                                 @endif
                                             </ul>
                                             @if (!empty($taskDetail->end_date) && $taskDetail->end_date != '0000-00-00')
-                                                <span data-bs-toggle="tooltip" title="{{ __('End Date') }}"
-                                                    @if (strtotime($taskDetail->end_date) < time()) class="text-danger" @endif>{{ Utility::getDateFormated($taskDetail->end_date) }}</span>
+                                                <span data-bs-toggle="tooltip" title="{{ __('Due') }}"
+                                                    @if (strtotime($taskDetail->end_date) < time()) class="text-danger" @endif>{{ \Carbon\Carbon::parse($taskDetail->end_date)->format('M d') }}</span>
                                             @endif
                                         </div>
                                         <div class="sales-item-bottom d-flex align-items-center justify-content-between">
-                                            <ul class="d-flex flex-wrap align-items-center gap-2 p-0 m-0">
-
-                                                <li class="d-inline-flex align-items-center gap-1 p-1 px-2 border rounded-1"
-                                                    data-bs-toggle="tooltip" title="{{ __('Comments') }}">
-                                                    <i class="f-16 ti ti-message"></i>
-                                                    {{ count($taskDetail->comments) }}
-                                                </li>
-
-                                                <li class="d-inline-flex align-items-center gap-1 p-1 px-2 border rounded-1"
-                                                    data-bs-toggle="tooltip" title="{{ __('Task Checklist') }}">
-                                                    <i class="f-16 ti ti-list"></i>{{ $taskDetail->countTaskChecklist() }}
-                                                </li>
+                                            <ul class="d-flex flex-wrap align-items-center gap-1 p-0 m-0">
+                                                @if(count($taskDetail->comments) > 0)
+                                                    <li class="d-inline-flex align-items-center gap-1" data-bs-toggle="tooltip" title="{{ __('Comments') }}">
+                                                        <i class="ti ti-message"></i>{{ count($taskDetail->comments) }}
+                                                    </li>
+                                                @endif
+                                                @php($checklistCount = $taskDetail->countTaskChecklist())
+                                                @if($checklistCount != '0/0')
+                                                    <li class="d-inline-flex align-items-center gap-1" data-bs-toggle="tooltip" title="{{ __('Checklist') }}">
+                                                        <i class="ti ti-list"></i>{{ $checklistCount }}
+                                                    </li>
+                                                @endif
                                             </ul>
                                             <div class="user-group">
                                                 @foreach ($taskDetail->users() as $user)
