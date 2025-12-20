@@ -7,7 +7,10 @@
       "Bash(\"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\":*)",
       "Bash(find:*)",
       "Bash(\"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root techland_erp -e \"SELECT * FROM settings WHERE value LIKE ''%envato%'' OR value LIKE ''%workdo%'' OR value LIKE ''%verify%'' OR name LIKE ''%script%'' LIMIT 10;\")",
-      "Bash(dir /b \"C:\\\\xampp\\\\htdocs\\\\techland-erp\\\\public\\\\js\")"
+      "Bash(dir /b \"C:\\\\xampp\\\\htdocs\\\\techland-erp\\\\public\\\\js\")",
+      "Bash(php -r:*)",
+      "Bash(php assign_tracker_permission.php:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

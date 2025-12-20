@@ -26,8 +26,61 @@ class Project extends Model
         'description',
         'status',
         'tags',
-        'created_by'
+        'created_by',
+        'uuid'
     ];
+
+    /**
+     * Boot the model and auto-generate UUID on creation
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'uuid';
+    }
+
+    /**
+     * Find a project by UUID or ID (for backward compatibility)
+     */
+    public static function findByUuidOrId($identifier)
+    {
+        // Try UUID first (36 characters with dashes)
+        if (is_string($identifier) && strlen($identifier) === 36 && strpos($identifier, '-') !== false) {
+            return static::where('uuid', $identifier)->first();
+        }
+
+        // Try as regular ID
+        return static::find($identifier);
+    }
+
+    /**
+     * Resolve route binding to check both UUID and ID
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        // Try UUID first
+        $project = $this->where('uuid', $value)->first();
+
+        // If not found by UUID, try by ID (backward compatibility)
+        if (!$project && is_numeric($value)) {
+            $project = $this->where('id', $value)->first();
+        }
+
+        return $project;
+    }
 
     public static $project_status=[
         'in_progress' => 'In Progress',

@@ -252,6 +252,7 @@
                 </div>
             </div>
         </div>
+        @can('view project budget')
         <div class="col-md-4 col-sm-6 col-12 leave-card mb-4">
             <div class="leave-card-inner d-flex align-items-center gap-3">
                 <svg class="bottom-svg" width="135" height="80" viewBox="0 0 135 80" fill="none"
@@ -275,7 +276,8 @@
                 </div>
             </div>
         </div>
-        @if (Auth::user()->type != 'client')
+        @endcan
+        @can('view project expense summary')
             <div class="col-md-4 col-sm-6 col-12 leave-card mb-4">
                 <div class="leave-card-inner d-flex align-items-center gap-3">
                     <svg class="bottom-svg" width="135" height="80" viewBox="0 0 135 80" fill="none"
@@ -299,9 +301,7 @@
                     </div>
                 </div>
             </div>
-        @else
-            <div class="col-lg-4 col-md-6"></div>
-        @endif
+        @endcan
         <div class="col-lg-4 col-md-4 mb-4">
             <div class="card h-100 mb-0">
                 <div class="card-body">
