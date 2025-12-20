@@ -190,6 +190,7 @@
             </div>
         </div>
     </div>
+    @can('view project expense summary')
     <div class="col-xxl-4 col-md-6 col-12 project-dash-card">
         <div class="project-card-inner d-flex align-items-center gap-3">
             <svg class="bottom-svg" width="135" height="80" viewBox="0 0 135 80" fill="none"
@@ -236,6 +237,7 @@
             </div>
         </div>
     </div>
+    @endcan
 </div>
     <div class="row">
         <div class="col-lg-4 mb-4">
