@@ -1165,13 +1165,13 @@
                                                 href="{{ route('task.calendar', ['all']) }}">{{ __('Task Calendar') }}</a>
                                         </li>
                                     @endcan
-                                    @can('view project tracker')
+                                    @if(\Auth::user()->type != 'super admin')
                                         <li
                                             class="dash-item  {{ Request::segment(1) == 'time-tracker' ? 'active open' : '' }}">
                                             <a class="dash-link"
                                                 href="{{ route('time.tracker') }}">{{ __('Tracker') }}</a>
                                         </li>
-                                    @endcan
+                                    @endif
                                     @if (\Auth::user()->type == 'company')
                                         <li
                                             class="dash-item  {{ Request::route()->getName() == 'project_report.index' || Request::route()->getName() == 'project_report.show' ? 'active' : '' }}">
