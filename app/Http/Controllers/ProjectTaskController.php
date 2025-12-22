@@ -232,31 +232,62 @@ class ProjectTaskController extends Controller
                 $user_projects = $usr->projects()->pluck('project_id', 'project_id')->toArray();
             }
 
-            $tasks = ProjectTask::whereIn('project_id', $user_projects);
-            if (\Auth::user()->type != 'company')
-            {
-                if (\Auth::user()->type == 'client')
-                {
-                    $tasks->where('created_by', \Auth::user()->creatorId());
+            // Get stages
+            $stages = TaskStage::where('created_by', $usr->creatorId())->orderBy('order')->get();
 
-                }
-                else
-                {
-                    $tasks->whereRaw("find_in_set('" . $usr->id . "',assign_to)");
-                }
-            }
-            else
-            {
-                $tasks->where('created_by', \Auth::user()->creatorId());
+            // Get projects for filter
+            $projects = Project::whereIn('id', $user_projects)->get();
+
+            // Get users for filter
+            $users = User::where('created_by', $usr->creatorId())->where('type', '!=', 'client')->get();
+
+            // Group tasks by stage
+            foreach($stages as $stage) {
+                $stageTasks = ProjectTask::whereIn('project_id', $user_projects)
+                    ->where('stage_id', $stage->id)
+                    ->where('created_by', $usr->creatorId())
+                    ->orderBy('order', 'asc')
+                    ->get();
+                $stage->tasks = $stageTasks;
             }
 
-            $tasks = $tasks->get();
-            return view('project_task.grid', compact('tasks', 'view'));
+            return view('project_task.grid', compact('stages', 'projects', 'users', 'view'));
 
         }
 
         return redirect()->back()->with('error', __('Permission Denied.'));
 
+    }
+
+    // Update task stage via AJAX (drag and drop)
+    public function updateTaskStage(Request $request)
+    {
+        $task = ProjectTask::find($request->task_id);
+
+        if ($task) {
+            $task->stage_id = $request->stage_id;
+            $task->save();
+
+            // Check if the stage is marked as complete
+            $stage = TaskStage::find($request->stage_id);
+            if ($stage && $stage->complete == 1) {
+                $task->is_complete = 1;
+                $task->save();
+            } else {
+                $task->is_complete = 0;
+                $task->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Task stage updated successfully')
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => __('Task not found')
+        ], 404);
     }
 
     // For Load Task using ajax

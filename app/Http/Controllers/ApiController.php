@@ -142,33 +142,78 @@ class ApiController extends Controller
         }
 
     }
-    public function uploadImage(Request $request){
-        $user = auth()->user();
-        $image_base64 = base64_decode($request->img);
-        $file =$request->imgName;
-        if($request->has('tracker_id') && !empty($request->tracker_id)){
-            $app_path = storage_path('uploads/traker_images/').$request->tracker_id.'/';
-            if (!file_exists($app_path)) {
-                mkdir($app_path, 0777, true);
-            }
+    // public function uploadImage(Request $request){
+    //     $user = auth()->user();
+    //     $image_base64 = base64_decode($request->img);
+    //     $file =$request->imgName;
+    //     if($request->has('tracker_id') && !empty($request->tracker_id)){
+    //         $app_path = storage_path('uploads/traker_images/').$request->tracker_id.'/';
+    //         if (!file_exists($app_path)) {
+    //             mkdir($app_path, 0777, true);
+    //         }
 
-        }else{
-            $app_path = storage_path('uploads/traker_images/');
-            if (!is_dir($app_path)) {
-                mkdir($app_path, 0777, true);
-            }
-        }
-        $file_name =  $app_path.$file;
-        file_put_contents( $file_name, $image_base64);
-        $new = new TrackPhoto();
-        $new->track_id = $request->tracker_id;
-        $new->user_id  = $user->id;
-        $new->img_path  = 'uploads/traker_images/'.$request->tracker_id.'/'.$file;
-        $new->time  = $request->time;
-        $new->status  = 1;
-        $new->created_by  = $user->creatorId();
-        $new->save();
-        return $this->success( [],'Uploaded successfully.');
+    //     }else{
+    //         $app_path = storage_path('uploads/traker_images/');
+    //         if (!is_dir($app_path)) {
+    //             mkdir($app_path, 0777, true);
+    //         }
+    //     }
+    //     $file_name =  $app_path.$file;
+    //     file_put_contents( $file_name, $image_base64);
+    //     $new = new TrackPhoto();
+    //     $new->track_id = $request->tracker_id;
+    //     $new->user_id  = $user->id;
+    //     $new->img_path  = 'uploads/traker_images/'.$request->tracker_id.'/'.$file;
+    //     $new->time  = $request->time;
+    //     $new->status  = 1;
+    //     $new->created_by  = $user->creatorId();
+    //     $new->save();
+    //     return $this->success( [],'Uploaded successfully.');
+    // }
+    public function uploadImage(Request $request)
+{
+    $user = auth()->user();
+
+    if (!$request->img || !$request->imgName) {
+        return response()->json(['error' => 'Invalid image data'], 400);
     }
+
+    // Clean base64 string
+    $base64 = preg_replace('#^data:image/\w+;base64,#i', '', $request->img);
+    $imageData = base64_decode($base64);
+
+    if ($imageData === false) {
+        return response()->json(['error' => 'Base64 decode failed'], 400);
+    }
+
+    $trackerId = $request->tracker_id ?? 'common';
+
+    // Absolute storage path (where file is written)
+    $dir = base_path("storage/uploads/traker_images/{$trackerId}");
+
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777, true);
+    }
+
+    // Sanitize filename
+    $fileName = basename($request->imgName);
+
+    // Write file
+    $fullPath = $dir . '/' . $fileName;
+    file_put_contents($fullPath, $imageData);
+
+    // Save DB record (PUBLIC URL PATH)
+    $new = new TrackPhoto();
+    $new->track_id   = $request->tracker_id;
+    $new->user_id    = $user->id;
+    $new->img_path   = "uploads/traker_images/{$trackerId}/{$fileName}";
+    $new->time       = $request->time;
+    $new->status     = 1;
+    $new->created_by = $user->creatorId();
+    $new->save();
+
+    return $this->success([], 'Uploaded successfully.');
+}
+
 
 }

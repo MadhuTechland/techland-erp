@@ -1,173 +1,775 @@
 @extends('layouts.admin')
 
 @section('page-title')
-    {{__('Tasks')}}
+    {{__('Task Board')}}
 @endsection
 
+@push('css-page')
+    <link rel="stylesheet" href="{{ asset('assets/css/plugins/dragula.min.css') }}">
+    <style>
+        /* ===== ELEGANT KANBAN BOARD ===== */
 
+        /* Page Background */
+        .pc-content {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: none;
+        }
+
+        .filter-bar .form-control,
+        .filter-bar .form-select {
+            font-size: 13px;
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            height: 40px;
+            transition: all 0.2s;
+        }
+
+        .filter-bar .form-control:focus,
+        .filter-bar .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .filter-bar label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Board Container */
+        .kanban-board {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 8px 4px 20px;
+            align-items: flex-start;
+        }
+
+        /* Kanban Column */
+        .kanban-column {
+            flex: 0 0 300px;
+            min-width: 300px;
+            max-width: 300px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 300px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.8);
+            overflow: hidden;
+        }
+
+        .kanban-column:nth-child(1) .kanban-column-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .kanban-column:nth-child(2) .kanban-column-header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .kanban-column:nth-child(3) .kanban-column-header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .kanban-column:nth-child(4) .kanban-column-header { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .kanban-column:nth-child(5) .kanban-column-header { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .kanban-column:nth-child(6) .kanban-column-header { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+
+        .kanban-column-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .kanban-column-header h6 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .kanban-column-header .task-count {
+            background: rgba(255,255,255,0.25);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .kanban-column-body {
+            padding: 12px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 80px;
+            background: #f8f9fa;
+        }
+
+        .kanban-column-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .kanban-column-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .kanban-column-body::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+
+        /* Task Card */
+        .task-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1), 0 3px 10px rgba(0,0,0,0.06);
+            border-color: #dee2e6;
+        }
+
+        .task-card-body {
+            padding: 14px;
+        }
+
+        /* Card Top Border Accent */
+        .task-card::before {
+            content: '';
+            display: block;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .task-card[data-priority="0"]::before { background: linear-gradient(90deg, #28a745 0%, #20c997 100%); }
+        .task-card[data-priority="1"]::before { background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%); }
+        .task-card[data-priority="2"]::before { background: linear-gradient(90deg, #dc3545 0%, #e83e8c 100%); }
+        .task-card[data-priority="3"]::before { background: linear-gradient(90deg, #6f42c1 0%, #e83e8c 100%); }
+
+        /* Task Title */
+        .task-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0 0 10px 0;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .task-card-title a {
+            color: #2d3748;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .task-card-title a:hover {
+            color: #667eea;
+        }
+
+        /* Task Meta */
+        .task-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .task-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .task-badge i {
+            font-size: 10px;
+        }
+
+        .task-badge.project {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            color: #4338ca;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .task-badge.priority-low {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        .task-badge.priority-medium {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        .task-badge.priority-high {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+        }
+
+        .task-badge.priority-urgent {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: #fff;
+        }
+
+        .task-badge.issue-type {
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Task Footer */
+        .task-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 10px;
+            margin-top: 10px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .task-card-icons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .task-card-icons span {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .task-card-icons span:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .task-card-icons i {
+            font-size: 12px;
+        }
+
+        .task-due-date {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .task-due-date.overdue {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #dc2626;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* User Avatars */
+        .task-avatars {
+            display: flex;
+        }
+
+        .task-avatars img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            margin-left: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .task-avatars img:first-child {
+            margin-left: 0;
+        }
+
+        .task-avatars img:hover {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+
+        /* Drag States */
+        .gu-mirror {
+            cursor: grabbing !important;
+            opacity: 1;
+            transform: rotate(4deg) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+            border-radius: 12px;
+        }
+
+        .gu-transit {
+            opacity: 0.3;
+            transform: scale(0.98);
+        }
+
+        .kanban-column-body.gu-over {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+            border-radius: 8px;
+        }
+
+        /* Empty State */
+        .kanban-empty {
+            padding: 30px 16px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        .kanban-empty::before {
+            content: '📋';
+            display: block;
+            font-size: 28px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+
+        /* Search Input */
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 16px;
+        }
+
+        .search-box input {
+            padding-left: 42px;
+            background: #f9fafb;
+        }
+
+        .search-box input:focus {
+            background: #fff;
+        }
+
+        /* Quick Filters */
+        .quick-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .quick-filter-btn {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 2px solid #e5e7eb;
+            background: #fff;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f5f3ff;
+        }
+
+        .quick-filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Issue Key */
+        .issue-key {
+            font-size: 11px;
+            color: #667eea;
+            font-weight: 700;
+            background: #f0f0ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Progress bar */
+        .task-progress {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .task-progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .task-progress-bar.bg-success { background: linear-gradient(90deg, #10b981 0%, #34d399 100%); }
+        .task-progress-bar.bg-primary { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+        .task-progress-bar.bg-warning { background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%); }
+        .task-progress-bar.bg-danger { background: linear-gradient(90deg, #ef4444 0%, #f87171 100%); }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .kanban-column {
+                flex: 0 0 260px;
+                min-width: 260px;
+            }
+
+            .filter-bar {
+                padding: 12px;
+            }
+
+            .quick-filters {
+                gap: 6px;
+            }
+
+            .quick-filter-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+        }
+    </style>
+@endpush
 
 @section('breadcrumb')
     <li class="breadcrumb-item"><a href="{{route('dashboard')}}">{{__('Dashboard')}}</a></li>
     <li class="breadcrumb-item"><a href="{{route('projects.index')}}">{{__('Project')}}</a></li>
-    <li class="breadcrumb-item">{{__('Task')}}</li>
+    <li class="breadcrumb-item">{{__('Task Board')}}</li>
 @endsection
-
 
 @section('action-btn')
     <div class="float-end">
-
-
         @if($view == 'grid')
             <a href="{{ route('taskBoard.view', 'list') }}" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" title="{{__('List View')}}">
-                <span class="btn-inner--text"><i class="ti ti-list"></i></span>
+                <i class="ti ti-list"></i>
             </a>
         @else
-            <a href="{{ route('taskBoard.view', 'grid') }}" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" title="{{__('Card View')}}">
-                <span class="btn-inner--text"><i class="ti ti-table"></i></span>
+            <a href="{{ route('taskBoard.view', 'grid') }}" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" title="{{__('Board View')}}">
+                <i class="ti ti-layout-kanban"></i>
             </a>
         @endif
     </div>
-
 @endsection
 
 @section('content')
-    
-                <div class="row task-product-wrapper">
-                    @if(count($tasks) > 0)
-                        @foreach($tasks as $task)
-                        <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 d-flex flex-column">
-                                <div class="card card-progress task-product-card border shadow-none h-100"  id="{{$task->id}}" style="{{ !empty($task->priority_color) ? 'border-left: 2px solid '.$task->priority_color.' !important' :'' }};">
-                                    <div class="card-body">
-                                        <div class="row align-items-center mb-2">
-                                            <div class="col-6">
-                                                <span class="badge p-2 px-3 rounded bg-{{\App\Models\ProjectTask::$priority_color[$task->priority]}}">{{ \App\Models\ProjectTask::$priority[$task->priority] }}</span>
-                                            </div>
-                                            <div class="col-6 text-end">
-                                                @if(str_replace('%','',$task->taskProgress($task)['percentage']) > 0)
-                                                    <span class="text-sm">{{ $task->taskProgress($task)['percentage'] }}</span>
-                                                    <div class="progress" style="top:0px">
-                                                        <div class="progress-bar bg-{{ $task->taskProgress($task)['color'] }}" role="progressbar"
-                                                             style="width: {{ $task->taskProgress($task)['percentage'] }};"></div>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <div class="search-box">
+                    <i class="ti ti-search"></i>
+                    <input type="text" class="form-control" id="task_search" placeholder="{{__('Search tasks...')}}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Project')}}</label>
+                <select class="form-select" id="filter_project">
+                    <option value="">{{__('All Projects')}}</option>
+                    @foreach($projects as $project)
+                        <option value="{{ $project->id }}">{{ $project->project_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Assignee')}}</label>
+                <select class="form-select" id="filter_user">
+                    <option value="">{{__('All Users')}}</option>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Priority')}}</label>
+                <select class="form-select" id="filter_priority">
+                    <option value="">{{__('All Priorities')}}</option>
+                    @foreach(\App\Models\ProjectTask::$priority as $key => $val)
+                        <option value="{{ $key }}">{{ __($val) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="quick-filters">
+                    <button class="quick-filter-btn active" data-filter="all">{{__('All')}}</button>
+                    <button class="quick-filter-btn" data-filter="my_tasks">{{__('My Tasks')}}</button>
+                    <button class="quick-filter-btn" data-filter="overdue">{{__('Overdue')}}</button>
+                    <button class="quick-filter-btn" data-filter="due_today">{{__('Due Today')}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                                        <a class="h6 task-name-break" href="{{ route('projects.tasks.index',!empty($task->project)?$task->project->id:'') }}">{{ $task->name }}</a>
-                                        <div class="row align-items-center">
-                                            <div class="col-12">
-                                                <div class="actions d-flex justify-content-between mt-2 mb-2">
-                                                    @if(count($task->taskFiles) > 0)
-                                                        <div class="action-item mr-2"><i class="ti ti-paperclip mr-2"></i>{{ count($task->taskFiles) }}</div>@endif
-                                                    @if(count($task->comments) > 0)
-                                                        <div class="action-item mr-2"><i class="ti ti-brand-hipchat mr-2"></i>{{ count($task->comments) }}</div>@endif
-                                                    @if($task->checklist->count() > 0)
-                                                        <div class="action-item mr-2"><i class="ti ti-list-check mr-2"></i>{{ $task->countTaskChecklist() }}</div>@endif
-                                                </div>
-                                            </div>
-                                            <div class="col-6">@if(!empty($task->end_date) && $task->end_date != '0000-00-00')<small @if(strtotime($task->end_date) < time())class="text-danger"@endif>{{ Utility::getDateFormated($task->end_date) }}</small>@endif</div>
-                                            <div class="col-6 text-end">
-                                                @if($users = $task->users())
-                                                    <div class="avatar-group">
-                                                        @foreach($users as $key => $user)
-                                                            @if($key<3)
-                                                                <a href="#" class="avatar rounded-circle avatar-sm">
-                                                                    <img class="hweb" data-original-title="{{(!empty($user)?$user->name:'')}}" @if($user->avatar) src="{{asset('/storage/uploads/avatar/'.$user->avatar)}}" @else src="{{asset('/storage/uploads/avatar/avatar.png')}}" @endif>
-                                                                </a>
-                                                            @else
-                                                                @break
-                                                            @endif
-                                                        @endforeach
-                                                        @if(count($users) > 3)
-                                                            <a href="#" class="avatar rounded-circle avatar-sm">
-                                                                <img class="hweb" data-original-title="{{(!empty($user)?$user->name:'')}}" @if($user->avatar) src="{{asset('/storage/uploads/avatar/'.$user->avatar)}}" @else src="{{asset('/storage/uploads/avatar/avatar.png')}}" @endif avatar="+ {{ count($users)-3 }}">
-                                                            </a>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        @forelse($stages as $stage)
+            <div class="kanban-column" data-stage-id="{{ $stage->id }}">
+                <div class="kanban-column-header">
+                    <h6>
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ $stage->color ?? '#5e6c84' }}; display: inline-block;"></span>
+                        {{ $stage->name }}
+                    </h6>
+                    <span class="task-count">{{ count($stage->tasks) }}</span>
+                </div>
+                <div class="kanban-column-body" id="stage-{{ $stage->id }}">
+                    @forelse($stage->tasks as $task)
+                        <div class="task-card" data-task-id="{{ $task->id }}" data-project-id="{{ $task->project_id }}" data-user-id="{{ $task->assign_to }}" data-priority="{{ $task->priority }}">
+                            <div class="task-card-body">
+                                <div class="task-card-meta">
+                                    @if($task->issue_key)
+                                        <span class="issue-key">{{ $task->issue_key }}</span>
+                                    @endif
+                                    @if($task->project)
+                                        <span class="task-badge project" title="{{ $task->project->project_name }}">
+                                            <i class="ti ti-folder"></i> {{ Str::limit($task->project->project_name, 15) }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <h6 class="task-card-title">
+                                    <a href="#" data-url="{{ route('projects.tasks.show', [$task->project_id, $task->id]) }}" data-ajax-popup="true" data-size="lg" data-bs-original-title="{{ $task->name }}">
+                                        {{ $task->name }}
+                                    </a>
+                                </h6>
+                                <div class="task-card-meta">
+                                    @if($task->issueType)
+                                        <span class="task-badge issue-type" style="background: {{ $task->issueType->color ?? '#5e6c84' }}">
+                                            <i class="{{ $task->issueType->icon ?? 'ti ti-subtask' }}"></i> {{ $task->issueType->name }}
+                                        </span>
+                                    @endif
+                                    <span class="task-badge priority-{{ strtolower(\App\Models\ProjectTask::$priority[$task->priority] ?? 'medium') }}">
+                                        {{ __(\App\Models\ProjectTask::$priority[$task->priority] ?? 'Medium') }}
+                                    </span>
+                                </div>
+                                @php
+                                    $progress = $task->taskProgress($task);
+                                    $percentage = str_replace('%', '', $progress['percentage']);
+                                @endphp
+                                @if($percentage > 0)
+                                    <div class="task-progress">
+                                        <div class="task-progress-bar bg-{{ $progress['color'] }}" style="width: {{ $progress['percentage'] }}"></div>
+                                    </div>
+                                @endif
+                                <div class="task-card-footer">
+                                    <div class="task-card-icons">
+                                        @if(count($task->taskFiles) > 0)
+                                            <span><i class="ti ti-paperclip"></i> {{ count($task->taskFiles) }}</span>
+                                        @endif
+                                        @if(count($task->comments) > 0)
+                                            <span><i class="ti ti-message"></i> {{ count($task->comments) }}</span>
+                                        @endif
+                                        @if($task->checklist->count() > 0)
+                                            <span><i class="ti ti-list-check"></i> {{ $task->countTaskChecklist() }}</span>
+                                        @endif
+                                        @if(!empty($task->end_date) && $task->end_date != '0000-00-00')
+                                            <span class="task-due-date {{ strtotime($task->end_date) < time() ? 'overdue' : '' }}">
+                                                <i class="ti ti-calendar"></i> {{ \Carbon\Carbon::parse($task->end_date)->format('M d') }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="task-avatars">
+                                        @php $users = $task->users(); @endphp
+                                        @foreach($users as $key => $user)
+                                            @if($key < 2)
+                                                <img src="{{ $user->avatar ? asset('/storage/uploads/avatar/'.$user->avatar) : asset('/storage/uploads/avatar/avatar.png') }}"
+                                                     alt="{{ $user->name }}" title="{{ $user->name }}" data-bs-toggle="tooltip">
+                                            @endif
+                                        @endforeach
+                                        @if(count($users) > 2)
+                                            <span class="task-badge" style="margin-left: -6px; background: #dfe1e6; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px;">+{{ count($users) - 2 }}</span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
-                    @else
-                        <div class="col-md-12">
-                            <h6 class="text-center m-3">{{__('No tasks found')}}</h6>
                         </div>
-                    @endif
+                    @empty
+                        <div class="kanban-empty">
+                            {{__('No tasks')}}
+                        </div>
+                    @endforelse
                 </div>
-           
+            </div>
+        @empty
+            <div class="col-12 text-center py-5">
+                <h6>{{__('No stages found. Please create task stages first.')}}</h6>
+            </div>
+        @endforelse
+    </div>
 @endsection
 
 @push('script-page')
+    <script src="{{ asset('assets/js/plugins/dragula.min.js') }}"></script>
     <script>
-        // ready
-        $(function () {
-            var sort = 'created_at-desc';
-            var status = '';
-            ajaxFilterTaskView('created_at-desc', '', ['see_my_tasks']);
+        $(document).ready(function() {
+            // Initialize Dragula for drag and drop
+            var containers = [];
+            $('.kanban-column-body').each(function() {
+                containers.push(this);
+            });
 
-            // when change status
-            $(".task-filter-actions").on('click', '.filter-action', function (e) {
-                if ($(this).hasClass('filter-show-all')) {
-                    $('.filter-action').removeClass('active');
-                    $(this).addClass('active');
-                } else {
-
-                    $('.filter-show-all').removeClass('active');
-                    if ($(this).hasClass('filter-other')) {
-                        $('.filter-other').removeClass('active');
-                    }
-                    if ($(this).hasClass('active')) {
-                        $(this).removeClass('active');
-                        $(this).blur();
-                    } else {
-                        $(this).addClass('active');
-                    }
+            var drake = dragula(containers, {
+                moves: function(el, container, handle) {
+                    return !el.classList.contains('kanban-empty');
                 }
+            });
 
-                var filterArray = [];
-                var url = $(this).parents('.task-filter-actions').attr('data-url');
-                $('div.task-filter-actions').find('.active').each(function () {
-                    filterArray.push($(this).attr('data-val'));
+            drake.on('drop', function(el, target, source, sibling) {
+                var taskId = $(el).data('task-id');
+                var newStageId = $(target).closest('.kanban-column').data('stage-id');
+                var oldStageId = $(source).closest('.kanban-column').data('stage-id');
+
+                if (newStageId !== oldStageId) {
+                    // Update task stage via AJAX
+                    $.ajax({
+                        url: '{{ route("task.update.stage") }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            task_id: taskId,
+                            stage_id: newStageId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Update counts
+                                updateStageCounts();
+                                show_toastr('success', response.message, 'success');
+                            }
+                        },
+                        error: function() {
+                            show_toastr('error', '{{__("Failed to update task stage")}}', 'error');
+                            // Revert the move
+                            $(source).append(el);
+                        }
+                    });
+                }
+            });
+
+            // Update stage counts
+            function updateStageCounts() {
+                $('.kanban-column').each(function() {
+                    var count = $(this).find('.task-card').length;
+                    $(this).find('.task-count').text(count);
                 });
-                status = filterArray;
-                ajaxFilterTaskView(sort, $('#task_keyword').val(), status);
-            });
-
-            // when change sorting order
-            $('#task_sort').on('click', 'a', function () {
-                sort = $(this).attr('data-val');
-                ajaxFilterTaskView(sort, $('#task_keyword').val(), status);
-                $('#task_sort a').removeClass('active');
-                $(this).addClass('active');
-            });
-
-            // when searching by task name
-            $(document).on('keyup', '#task_keyword', function () {
-                ajaxFilterTaskView(sort, $(this).val(), status);
-            });
-        });
-
-        // For Filter
-        function ajaxFilterTaskView(task_sort, keyword = '', status = '') {
-            var mainEle = $('#taskboard_view');
-            var view = '{{$view}}';
-            var data = {
-                view: view,
-                sort: task_sort,
-                keyword: keyword,
-                status: status,
             }
 
-            $.ajax({
-                url: '{{ route('project.taskboard.view') }}',
-                data: data,
-                success: function (data) {
-                    mainEle.html(data.html);
-                }
+            // Filter functionality
+            function filterTasks() {
+                var search = $('#task_search').val().toLowerCase();
+                var project = $('#filter_project').val();
+                var user = $('#filter_user').val();
+                var priority = $('#filter_priority').val();
+                var quickFilter = $('.quick-filter-btn.active').data('filter');
+                var today = new Date().toISOString().split('T')[0];
+
+                $('.task-card').each(function() {
+                    var $card = $(this);
+                    var taskTitle = $card.find('.task-card-title').text().toLowerCase();
+                    var taskProject = $card.data('project-id').toString();
+                    var taskUser = $card.data('user-id') ? $card.data('user-id').toString() : '';
+                    var taskPriority = $card.data('priority').toString();
+                    var isOverdue = $card.find('.task-due-date.overdue').length > 0;
+                    var dueDate = $card.find('.task-due-date').text().trim();
+
+                    var show = true;
+
+                    // Search filter
+                    if (search && taskTitle.indexOf(search) === -1) {
+                        show = false;
+                    }
+
+                    // Project filter
+                    if (project && taskProject !== project) {
+                        show = false;
+                    }
+
+                    // User filter
+                    if (user && taskUser.indexOf(user) === -1) {
+                        show = false;
+                    }
+
+                    // Priority filter
+                    if (priority && taskPriority !== priority) {
+                        show = false;
+                    }
+
+                    // Quick filters
+                    if (quickFilter === 'my_tasks') {
+                        var currentUserId = '{{ Auth::user()->id }}';
+                        if (taskUser.indexOf(currentUserId) === -1) {
+                            show = false;
+                        }
+                    } else if (quickFilter === 'overdue' && !isOverdue) {
+                        show = false;
+                    } else if (quickFilter === 'due_today') {
+                        // Check if due today
+                        var cardDueDate = $card.find('.task-due-date').length > 0;
+                        if (!cardDueDate) show = false;
+                    }
+
+                    $card.toggle(show);
+                });
+
+                // Show/hide empty message
+                $('.kanban-column-body').each(function() {
+                    var visibleCards = $(this).find('.task-card:visible').length;
+                    var emptyMsg = $(this).find('.kanban-empty');
+                    if (visibleCards === 0 && emptyMsg.length === 0) {
+                        $(this).append('<div class="kanban-empty">{{__("No tasks")}}</div>');
+                    } else if (visibleCards > 0) {
+                        emptyMsg.remove();
+                    }
+                });
+
+                updateStageCounts();
+            }
+
+            // Event listeners for filters
+            $('#task_search').on('keyup', filterTasks);
+            $('#filter_project, #filter_user, #filter_priority').on('change', filterTasks);
+
+            // Quick filter buttons
+            $('.quick-filter-btn').on('click', function() {
+                $('.quick-filter-btn').removeClass('active');
+                $(this).addClass('active');
+                filterTasks();
             });
-        }
+        });
     </script>
 @endpush

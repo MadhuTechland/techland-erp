@@ -887,6 +887,7 @@ Route::resource('custom-question', CustomQuestionController::class)->middleware(
 Route::resource('interview-schedule', InterviewScheduleController::class)->middleware(['auth', 'XSS']);
 Route::get('taskboard/{view?}', [ProjectTaskController::class, 'taskBoard'])->name('taskBoard.view')->middleware(['auth', 'XSS']);
 Route::get('taskboard-view', [ProjectTaskController::class, 'taskboardView'])->name('project.taskboard.view')->middleware(['auth', 'XSS']);
+Route::post('task/update-stage', [ProjectTaskController::class, 'updateTaskStage'])->name('task.update.stage')->middleware(['auth', 'XSS']);
 
 Route::resource('document-upload', DucumentUploadController::class)->middleware(['auth', 'XSS']);
 

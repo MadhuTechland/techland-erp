@@ -7,63 +7,95 @@
     <link rel="stylesheet" href="{{ asset('css/summernote/summernote-bs4.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/plugins/dragula.min.css') }}" id="main-style-link">
     <style>
-        /* ===== JIRA-STYLE COMPACT KANBAN ===== */
+        /* ===== ELEGANT KANBAN BOARD ===== */
 
         /* Board container */
         .kanban-wrapper {
             padding: 0;
             display: flex;
-            gap: 8px;
+            gap: 16px;
             overflow-x: auto;
             align-items: flex-start;
+            padding-bottom: 20px;
         }
 
         .kanban-wrapper > .col {
-            flex: 0 0 260px;
-            max-width: 260px;
-            min-width: 260px;
-            padding: 0 4px;
+            flex: 0 0 300px;
+            max-width: 300px;
+            min-width: 300px;
+            padding: 0;
         }
 
-        /* Column styling */
+        /* Column styling with gradient headers */
         .crm-sales-card {
-            background: #f4f5f7;
+            background: #f8fafc;
             border: none;
-            border-radius: 3px;
-            box-shadow: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
         }
 
         .crm-sales-card .card-header {
-            background: transparent;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-bottom: none;
-            padding: 8px 8px 4px;
+            padding: 16px 20px;
             min-height: auto;
         }
 
+        /* Different gradient colors for each column */
+        .kanban-wrapper > .col:nth-child(1) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .kanban-wrapper > .col:nth-child(2) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .kanban-wrapper > .col:nth-child(3) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .kanban-wrapper > .col:nth-child(4) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .kanban-wrapper > .col:nth-child(5) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .kanban-wrapper > .col:nth-child(6) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        .kanban-wrapper > .col:nth-child(7) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+        .kanban-wrapper > .col:nth-child(8) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+        }
+
         .crm-sales-card .card-header h4 {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
             text-transform: uppercase;
-            color: #5e6c84;
-            letter-spacing: 0.04em;
+            color: #fff;
+            letter-spacing: 0.5px;
             margin: 0;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         /* Task count badge */
         .count {
-            background: transparent;
-            padding: 0;
-            font-size: 11px;
-            font-weight: 500;
-            color: #5e6c84;
+            background: rgba(255,255,255,0.25);
+            padding: 4px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
         }
 
         /* Kanban box / task container */
         .kanban-box {
-            min-height: 40px;
-            padding: 0 4px 4px;
-            max-height: calc(100vh - 280px);
+            min-height: 100px;
+            padding: 12px;
+            max-height: calc(100vh - 320px);
             overflow-y: auto;
+            background: #f8fafc;
         }
 
         .kanban-box::-webkit-scrollbar {
@@ -75,152 +107,182 @@
         }
 
         .kanban-box::-webkit-scrollbar-thumb {
-            background: #c1c7d0;
+            background: #cbd5e1;
             border-radius: 3px;
         }
 
-        /* ===== TASK CARDS - JIRA STYLE ===== */
+        .kanban-box::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* ===== TASK CARDS - ELEGANT STYLE ===== */
         .sales-item {
             background: #fff;
-            border-radius: 3px;
-            margin-bottom: 6px;
-            box-shadow: 0 1px 0 rgba(9,30,66,.13);
-            border: none;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
             cursor: pointer;
-            transition: background 85ms ease-in, box-shadow 85ms ease-in;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .sales-item::before {
+            content: '';
+            display: block;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* Priority-based top border colors */
+        .sales-item[data-priority="0"]::before,
+        .sales-item:has(.bg-light-info)::before {
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        }
+        .sales-item[data-priority="1"]::before,
+        .sales-item:has(.bg-light-warning)::before {
+            background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);
+        }
+        .sales-item[data-priority="2"]::before,
+        .sales-item:has(.bg-light-danger)::before {
+            background: linear-gradient(90deg, #dc3545 0%, #e83e8c 100%);
         }
 
         .sales-item:hover {
-            background: #f4f5f7;
-            box-shadow: 0 1px 0 rgba(9,30,66,.25);
-            transform: none;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-color: #cbd5e1;
         }
 
         /* Dragging states */
         .gu-mirror {
             cursor: grabbing !important;
             opacity: 1;
-            transform: rotate(2deg);
-            box-shadow: 0 8px 16px -4px rgba(9,30,66,.25), 0 0 0 1px rgba(9,30,66,.08) !important;
+            transform: rotate(3deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
         }
 
         .gu-transit {
-            opacity: 0.4;
+            opacity: 0.3;
         }
 
         .gu-over {
-            background: #e4f0f6 !important;
+            background: #f0f9ff !important;
+            border: 2px dashed #3b82f6 !important;
         }
 
-        /* Card sections - ultra compact */
+        /* Card sections */
         .sales-item-top {
-            padding: 6px 8px 4px;
+            padding: 12px 14px 8px;
             border-bottom: none !important;
         }
 
         .sales-item-top h5 {
-            font-size: 13px;
-            font-weight: 400;
-            line-height: 1.3;
-            margin: 0 0 4px 0;
-            color: #172b4d;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 0 0 8px 0;
+            color: #1e293b;
         }
 
         .sales-item-top h5 a {
-            color: #172b4d;
+            color: #1e293b;
             text-decoration: none;
+            transition: color 0.15s;
         }
 
         .sales-item-top h5 a:hover {
-            color: #0052cc;
-            text-decoration: underline;
+            color: #6366f1;
         }
 
         /* Badge container */
         .badge-wrp {
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
         .badge-wrp .badge {
             font-size: 10px;
-            font-weight: 500;
-            padding: 2px 4px;
-            border-radius: 3px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
             text-transform: none;
             letter-spacing: 0;
         }
 
         /* Issue key badge */
         .badge-wrp .badge.bg-secondary {
-            background: #dfe1e6 !important;
-            color: #42526e !important;
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) !important;
+            color: #475569 !important;
             box-shadow: none;
             font-size: 10px;
-            font-weight: 500;
+            font-weight: 600;
         }
 
-        /* Center section - minimal */
+        /* Center section */
         .sales-item-center {
-            padding: 4px 8px;
+            padding: 8px 14px;
             border-bottom: none !important;
         }
 
         .sales-item-center ul {
             margin: 0;
             padding: 0;
-            gap: 4px !important;
+            gap: 8px !important;
         }
 
         .sales-item-center li,
         .sales-item-bottom li {
-            font-size: 10px;
-            padding: 1px 4px;
-            border-radius: 2px;
-            background: transparent;
+            font-size: 11px;
+            padding: 3px 6px;
+            border-radius: 6px;
+            background: #f1f5f9;
             border: none;
-            color: #5e6c84;
+            color: #64748b;
         }
 
         .sales-item-center li i,
         .sales-item-bottom li i {
             font-size: 12px;
-            color: #6b778c;
+            color: #64748b;
         }
 
         /* Date styling */
         .sales-item-center span[data-bs-toggle="tooltip"] {
-            font-size: 10px;
-            padding: 1px 4px;
-            background: transparent;
+            font-size: 11px;
+            padding: 3px 8px;
+            background: #f1f5f9;
             border: none;
-            color: #5e6c84;
+            color: #64748b;
+            border-radius: 6px;
         }
 
         .sales-item-center .text-danger {
-            color: #de350b !important;
-            background: #ffebe6;
-            border-radius: 2px;
-            padding: 1px 4px;
-            font-weight: 500;
+            color: #fff !important;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-weight: 600;
         }
 
         /* Bottom section */
         .sales-item-bottom {
-            padding: 4px 8px 6px;
-            background: transparent;
+            padding: 8px 14px 12px;
+            background: #fafbfc;
+            border-top: 1px solid #f1f5f9;
         }
 
         .sales-item-bottom ul {
-            gap: 4px !important;
+            gap: 8px !important;
         }
 
-        /* User avatars - smaller */
+        /* User avatars */
         .user-group img {
-            width: 22px;
-            height: 22px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            margin-left: -6px;
-            border: 1.5px solid #fff;
+            margin-left: -8px;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .user-group img:first-child {
@@ -230,7 +292,7 @@
         /* Menu button */
         .btn-group.card-option {
             opacity: 0;
-            transition: opacity 85ms;
+            transition: opacity 0.15s;
         }
 
         .sales-item:hover .btn-group.card-option {
@@ -238,128 +300,261 @@
         }
 
         .btn-group.card-option button {
-            padding: 2px 4px;
-            font-size: 14px;
-            color: #6b778c;
+            padding: 4px 6px;
+            font-size: 16px;
+            color: #94a3b8;
+            background: #f1f5f9;
+            border-radius: 6px;
         }
 
         .btn-group.card-option button:hover {
-            color: #172b4d;
+            color: #475569;
+            background: #e2e8f0;
             transform: none;
         }
 
-        /* Priority badges - Jira style */
+        /* Priority badges - Elegant style */
         .badge.bg-light-danger {
-            background: #ffebe6 !important;
-            color: #de350b !important;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+            color: #dc2626 !important;
             border: none;
         }
 
         .badge.bg-light-warning {
-            background: #fff3cd !important;
-            color: #974f0c !important;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+            color: #d97706 !important;
             border: none;
         }
 
         .badge.bg-light-primary {
-            background: #deebff !important;
-            color: #0747a6 !important;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+            color: #2563eb !important;
             border: none;
         }
 
         .badge.bg-light-info {
-            background: #e6fcff !important;
-            color: #008da6 !important;
+            background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%) !important;
+            color: #0891b2 !important;
             border: none;
         }
 
-        /* Issue type badges - Jira colors */
+        /* Issue type badges - Vibrant colors */
         .badge.bg-purple {
-            background: #6554c0 !important;
-            box-shadow: none;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+            box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
         }
 
         .badge.bg-success {
-            background: #36b37e !important;
-            box-shadow: none;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
         }
 
         .badge.bg-primary {
-            background: #0065ff !important;
-            box-shadow: none;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
         }
 
         .badge.bg-danger {
-            background: #ff5630 !important;
-            box-shadow: none;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
         }
 
         .badge.bg-info {
-            background: #00b8d9 !important;
-            box-shadow: none;
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+            box-shadow: 0 2px 4px rgba(6, 182, 212, 0.3);
+        }
+
+        .badge.bg-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
         }
 
         /* Parent indicator */
         .sales-item-top .ti-arrow-badge-up {
-            color: #6b778c;
-            font-size: 12px;
+            color: #8b5cf6;
+            font-size: 14px;
         }
 
-        /* Filter card - compact */
+        /* Filter card - Elegant */
         .card {
             background: #fff;
-            border: 1px solid #dfe1e6;
-            box-shadow: none;
-            border-radius: 3px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-radius: 12px;
         }
 
         .card .card-body {
-            padding: 10px 12px;
+            padding: 12px 16px;
         }
 
         .card .form-label {
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            color: #5e6c84;
-            margin-bottom: 4px;
+            color: #64748b;
+            margin-bottom: 6px;
         }
 
         .card .form-control {
             font-size: 13px;
-            padding: 6px 10px;
-            border-radius: 3px;
-            border: 1px solid #dfe1e6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.15s;
         }
 
         .card .form-control:focus {
-            border-color: #4c9aff;
-            box-shadow: 0 0 0 1px #4c9aff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         /* Dropdown menu */
         .dropdown-menu {
             font-size: 13px;
-            border-radius: 3px;
-            box-shadow: 0 4px 8px -2px rgba(9,30,66,.25), 0 0 1px rgba(9,30,66,.31);
-            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border: 1px solid #e2e8f0;
+            padding: 8px;
         }
 
         .dropdown-item {
-            padding: 6px 12px;
+            padding: 8px 12px;
             font-size: 13px;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+
+        .dropdown-item:hover {
+            background: #f1f5f9;
         }
 
         .dropdown-item i {
-            font-size: 14px;
-            margin-right: 6px;
+            font-size: 15px;
+            margin-right: 8px;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
             .kanban-wrapper > .col {
-                flex: 0 0 240px;
-                min-width: 240px;
+                flex: 0 0 280px;
+                min-width: 280px;
+            }
+        }
+
+        /* Empty state */
+        .kanban-box:empty::after {
+            content: 'No tasks';
+            display: block;
+            text-align: center;
+            padding: 30px 20px;
+            color: #94a3b8;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: none;
+        }
+
+        .filter-bar .form-control,
+        .filter-bar .form-select {
+            font-size: 13px;
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            height: 40px;
+            transition: all 0.2s;
+        }
+
+        .filter-bar .form-control:focus,
+        .filter-bar .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .filter-bar label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Search Input */
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 16px;
+        }
+
+        .search-box input {
+            padding-left: 42px;
+            background: #f9fafb;
+        }
+
+        .search-box input:focus {
+            background: #fff;
+        }
+
+        /* Quick Filters */
+        .quick-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .quick-filter-btn {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 2px solid #e5e7eb;
+            background: #fff;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f5f3ff;
+        }
+
+        .quick-filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .filter-bar {
+                padding: 12px;
+            }
+
+            .quick-filters {
+                gap: 6px;
+            }
+
+            .quick-filter-btn {
+                padding: 6px 10px;
+                font-size: 11px;
             }
         }
     </style>
@@ -809,28 +1004,80 @@
             });
         }
 
-        // Issue type filter
-        $(document).on('change', '#issue_type_filter', function() {
-            var selectedType = $(this).val();
+        // ===== FILTER FUNCTIONALITY =====
+        function filterTasks() {
+            var search = $('#task_search').val().toLowerCase();
+            var issueType = $('#issue_type_filter').val();
+            var user = $('#filter_user').val();
+            var priority = $('#filter_priority').val();
+            var quickFilter = $('.quick-filter-btn.active').data('filter');
+            var today = new Date().toISOString().split('T')[0];
+            var currentUserId = '{{ Auth::user()->id }}';
 
             $('.sales-item').each(function() {
-                if(selectedType === '') {
-                    $(this).show();
-                } else {
-                    var taskIssueType = $(this).find('[data-issue-type-id]').attr('data-issue-type-id');
-                    if(taskIssueType == selectedType) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
+                var $card = $(this);
+                var taskTitle = $card.find('.sales-item-top h5 a').text().toLowerCase();
+                var taskIssueType = $card.data('issue-type') ? $card.data('issue-type').toString() : '';
+                var taskUserIds = $card.data('user-ids') ? $card.data('user-ids').toString() : '';
+                var taskPriority = $card.data('priority') ? $card.data('priority').toString() : '';
+                var taskEndDate = $card.data('end-date') ? $card.data('end-date').toString() : '';
+                var isOverdue = taskEndDate && taskEndDate !== '0000-00-00' && taskEndDate < today;
+
+                var show = true;
+
+                // Search filter
+                if (search && taskTitle.indexOf(search) === -1) {
+                    show = false;
                 }
+
+                // Issue Type filter
+                if (issueType && taskIssueType !== issueType) {
+                    show = false;
+                }
+
+                // User filter
+                if (user && taskUserIds.indexOf(user) === -1) {
+                    show = false;
+                }
+
+                // Priority filter
+                if (priority && taskPriority !== priority) {
+                    show = false;
+                }
+
+                // Quick filters
+                if (quickFilter === 'my_tasks') {
+                    if (taskUserIds.indexOf(currentUserId) === -1) {
+                        show = false;
+                    }
+                } else if (quickFilter === 'overdue' && !isOverdue) {
+                    show = false;
+                }
+
+                $card.toggle(show);
             });
 
             // Update counts
+            updateTaskCounts();
+        }
+
+        // Update task counts in column headers
+        function updateTaskCounts() {
             $('.kanban-box').each(function() {
                 var visibleCount = $(this).find('.sales-item:visible').length;
                 $(this).closest('.crm-sales-card').find('.count').text(visibleCount);
             });
+        }
+
+        // Event listeners for filters
+        $('#task_search').on('keyup', filterTasks);
+        $('#issue_type_filter, #filter_user, #filter_priority').on('change', filterTasks);
+
+        // Quick filter buttons
+        $('.quick-filter-btn').on('click', function() {
+            $('.quick-filter-btn').removeClass('active');
+            $(this).addClass('active');
+            filterTasks();
         });
     </script>
 @endpush
@@ -854,20 +1101,47 @@
 @endsection
 
 @section('content')
-    <div class="row mb-2">
-        <div class="col-sm-12">
-            <div class="card" style="margin-bottom: 8px;">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <select class="form-control form-control-sm" id="issue_type_filter" style="width: 160px; font-size: 12px;">
-                                <option value="">{{__('All Types')}}</option>
-                                @foreach(\App\Models\IssueType::where('is_active', true)->orderBy('order')->get() as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <div class="search-box">
+                    <i class="ti ti-search"></i>
+                    <input type="text" class="form-control" id="task_search" placeholder="{{__('Search tasks...')}}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Issue Type')}}</label>
+                <select class="form-select" id="issue_type_filter">
+                    <option value="">{{__('All Types')}}</option>
+                    @foreach(\App\Models\IssueType::where('is_active', true)->orderBy('order')->get() as $type)
+                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Assignee')}}</label>
+                <select class="form-select" id="filter_user">
+                    <option value="">{{__('All Users')}}</option>
+                    @foreach($project->users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Priority')}}</label>
+                <select class="form-select" id="filter_priority">
+                    <option value="">{{__('All Priorities')}}</option>
+                    @foreach(\App\Models\ProjectTask::$priority as $key => $val)
+                        <option value="{{ $key }}">{{ __($val) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="quick-filters">
+                    <button class="quick-filter-btn active" data-filter="all">{{__('All')}}</button>
+                    <button class="quick-filter-btn" data-filter="my_tasks">{{__('My Tasks')}}</button>
+                    <button class="quick-filter-btn" data-filter="overdue">{{__('Overdue')}}</button>
                 </div>
             </div>
         </div>
@@ -887,7 +1161,7 @@
                             <div class="sales-item-wrp kanban-box" id="task-list-{{ $stage->id }}"
                                 data-status="{{ $stage->id }}">
                                 @foreach ($tasks as $taskDetail)
-                                    <div class="sales-item draggable-item" id="{{ $taskDetail->id }}">
+                                    <div class="sales-item draggable-item" id="{{ $taskDetail->id }}" data-priority="{{ $taskDetail->priority }}" data-user-ids="{{ $taskDetail->assign_to }}" data-issue-type="{{ $taskDetail->issue_type_id }}" data-end-date="{{ $taskDetail->end_date }}">
                                         <div class="sales-item-top">
                                             <div class="d-flex align-items-start justify-content-between">
                                                 <h5 class="flex-1">
