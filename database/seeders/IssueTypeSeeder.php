@@ -19,9 +19,10 @@ class IssueTypeSeeder extends Seeder
                 'key' => 'EPIC',
                 'icon' => 'ti ti-bolt',
                 'color' => 'purple',
-                'description' => 'A large body of work that can be broken down into smaller stories',
+                'description' => 'A large body of work that can be broken down into smaller stories. Time is aggregated from child items.',
                 'is_active' => true,
                 'is_subtask' => false,
+                'is_container' => true, // Container - aggregates time from children
                 'order' => 1,
                 'created_by' => 1,
                 'created_at' => now(),
@@ -32,9 +33,10 @@ class IssueTypeSeeder extends Seeder
                 'key' => 'STORY',
                 'icon' => 'ti ti-bookmark',
                 'color' => 'success',
-                'description' => 'A user story that delivers value to the end user',
+                'description' => 'A user story that delivers value to the end user. Time is aggregated from child tasks.',
                 'is_active' => true,
                 'is_subtask' => false,
+                'is_container' => true, // Container - aggregates time from children
                 'order' => 2,
                 'created_by' => 1,
                 'created_at' => now(),
@@ -48,6 +50,7 @@ class IssueTypeSeeder extends Seeder
                 'description' => 'A task that needs to be done',
                 'is_active' => true,
                 'is_subtask' => false,
+                'is_container' => false, // Work item - has actual estimated hours
                 'order' => 3,
                 'created_by' => 1,
                 'created_at' => now(),
@@ -61,6 +64,7 @@ class IssueTypeSeeder extends Seeder
                 'description' => 'A problem which impairs or prevents proper function',
                 'is_active' => true,
                 'is_subtask' => false,
+                'is_container' => false, // Work item - has actual estimated hours
                 'order' => 4,
                 'created_by' => 1,
                 'created_at' => now(),
@@ -74,6 +78,7 @@ class IssueTypeSeeder extends Seeder
                 'description' => 'A smaller piece of work that is part of a larger issue',
                 'is_active' => true,
                 'is_subtask' => true,
+                'is_container' => false, // Work item - has actual estimated hours
                 'order' => 5,
                 'created_by' => 1,
                 'created_at' => now(),

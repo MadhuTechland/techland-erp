@@ -34,14 +34,21 @@ class ProjectTaskController extends Controller
 
             if($project != null){
 
+                // Get work item issue type IDs (Task, Bug, Sub-task - excludes Epic, Story)
+                $workItemTypeIds = \App\Models\IssueType::where('is_container', false)->pluck('id')->toArray();
+
                 $stages  = TaskStage::orderBy('order')->where('created_by',\Auth::user()->creatorId())->get();
                 foreach($stages as $status)
                 {
                     $stageClass[] = 'task-list-' . $status->id;
-                    $task         = ProjectTask::where('project_id', '=', $project_id);
-                    // check project is shared or owner
 
-                    //end
+                    // Only show work items in Kanban (not containers like Epic/Story)
+                    $task = ProjectTask::where('project_id', '=', $project_id)
+                        ->where(function($query) use ($workItemTypeIds) {
+                            $query->whereIn('issue_type_id', $workItemTypeIds)
+                                  ->orWhereNull('issue_type_id'); // Include tasks without issue type
+                        });
+
                     $task->orderBy('order');
                     $status['tasks'] = $task->where('stage_id', '=', $status->id)->get();
                 }
@@ -1283,5 +1290,57 @@ class ProjectTaskController extends Controller
         }
 
         return $arrayJson;
+    }
+
+    /**
+     * Backlog View - Shows hierarchical task structure
+     * Displays Milestones > Epics/Stories > Tasks/Bugs with proper grouping
+     * Only work items (Task, Bug, Sub-task) count toward time calculations
+     */
+    public function backlog($project_id)
+    {
+        $usr = \Auth::user();
+        if(\Auth::user()->can('manage project task'))
+        {
+            $project = Project::where('id', $project_id)->where('created_by', \Auth::user()->creatorId())->first();
+
+            if($project != null){
+                // Get milestones with their tasks
+                $milestones = $project->milestones()->orderBy('id', 'desc')->get();
+
+                // Get tasks without milestone (backlog items)
+                $backlogTasks = ProjectTask::where('project_id', $project_id)
+                    ->whereNull('milestone_id')
+                    ->whereNull('parent_id') // Only top-level items
+                    ->with(['issueType', 'children.issueType', 'children.children.issueType'])
+                    ->orderBy('order')
+                    ->get();
+
+                // Get container types (Epic, Story) for filtering
+                $containerTypes = \App\Models\IssueType::where('is_container', true)->get();
+
+                // Get work item types for reference
+                $workItemTypes = \App\Models\IssueType::where('is_container', false)->get();
+
+                // Calculate total project hours (only work items)
+                $projectHrs = Project::projectHrs($project_id);
+
+                return view('project_task.backlog', compact(
+                    'project',
+                    'milestones',
+                    'backlogTasks',
+                    'containerTypes',
+                    'workItemTypes',
+                    'projectHrs'
+                ));
+            }else{
+                return redirect()->route('projects.index')->with('error', __('Project not found'));
+            }
+
+        }
+        else
+        {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
     }
 }

@@ -116,10 +116,15 @@ class Project extends Model
         }
     }
 
+    /**
+     * Calculate project hours - ONLY counts work items (Task, Bug, Sub-task)
+     * Container types (Epic, Story) are NOT counted as they aggregate from children
+     * This prevents double-counting when a milestone is 60hrs and tasks total 60hrs
+     */
     public static function projectHrs($project_id, $task_id = '')
     {
         $project = Project::find($project_id);
-        $tasks   = self::projectTask($project_id);
+        $tasks   = self::projectWorkItems($project_id);
         $taskHrs = 0;
 
         foreach($tasks as $task)
@@ -133,7 +138,11 @@ class Project extends Model
     }
 
     private static $projectTask = NULL;
+    private static $projectWorkItems = NULL;
 
+    /**
+     * Get all tasks for a project (including containers)
+     */
     public static function projectTask($id)
     {
         if(self::$projectTask == null)
@@ -143,6 +152,38 @@ class Project extends Model
         }
 
         return self::$projectTask;
+    }
+
+    /**
+     * Get only work items (Task, Bug, Sub-task) - excludes containers (Epic, Story)
+     * These are the items that have actual estimated hours
+     */
+    public static function projectWorkItems($id)
+    {
+        if(self::$projectWorkItems == null)
+        {
+            // Get work item issue type IDs (non-container types)
+            $workItemTypeIds = IssueType::where('is_container', false)->pluck('id')->toArray();
+
+            $tasks = ProjectTask::where('project_id', '=', $id)
+                ->where(function($query) use ($workItemTypeIds) {
+                    $query->whereIn('issue_type_id', $workItemTypeIds)
+                          ->orWhereNull('issue_type_id'); // Include tasks without issue type
+                })
+                ->get();
+            self::$projectWorkItems = $tasks;
+        }
+
+        return self::$projectWorkItems;
+    }
+
+    /**
+     * Reset cached project tasks (call when tasks are modified)
+     */
+    public static function resetTaskCache()
+    {
+        self::$projectTask = NULL;
+        self::$projectWorkItems = NULL;
     }
 
 

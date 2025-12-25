@@ -1089,7 +1089,10 @@
     <li class="breadcrumb-item">{{ __('Task') }}</li>
 @endsection
 @section('action-btn')
-    <div class="d-flex">
+    <div class="d-flex gap-2">
+        <a href="{{ route('projects.tasks.backlog', $project->id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="{{ __('Backlog View') }}">
+            <i class="ti ti-list-tree"></i> {{ __('Backlog') }}
+        </a>
         @can('create project task')
             <a href="#" data-size="lg" data-url="{{ route('projects.tasks.create', $project->id) }}"
                 data-ajax-popup="true" data-bs-toggle="tooltip"

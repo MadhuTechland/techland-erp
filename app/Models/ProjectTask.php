@@ -246,6 +246,100 @@ class ProjectTask extends Model
         return $this->children();
     }
 
+    /**
+     * Check if this task is a container type (Epic/Story)
+     * Container types aggregate time from children instead of having their own time
+     */
+    public function isContainer(): bool
+    {
+        if ($this->issueType) {
+            return $this->issueType->is_container ?? false;
+        }
+        return false;
+    }
+
+    /**
+     * Check if this task is a work item (Task/Bug/Sub-task)
+     * Work items have actual estimated hours
+     */
+    public function isWorkItem(): bool
+    {
+        return !$this->isContainer();
+    }
+
+    /**
+     * Get total estimated hours for this item
+     * For containers (Epic/Story): returns sum of all children's hours
+     * For work items (Task/Bug/Sub-task): returns own estimated_hrs
+     */
+    public function getTotalEstimatedHrs(): float
+    {
+        if ($this->isContainer()) {
+            return $this->getChildrenTotalHrs();
+        }
+        return floatval($this->estimated_hrs ?? 0);
+    }
+
+    /**
+     * Get total estimated hours from all children (recursive)
+     * Only counts work items, not container children
+     */
+    public function getChildrenTotalHrs(): float
+    {
+        $total = 0;
+        $children = $this->children()->with('issueType')->get();
+
+        foreach ($children as $child) {
+            if ($child->isContainer()) {
+                // Recursively get hours from container's children
+                $total += $child->getChildrenTotalHrs();
+            } else {
+                // Work item - add its estimated hours
+                $total += floatval($child->estimated_hrs ?? 0);
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Get all work item descendants (recursive)
+     * Returns only Task, Bug, Sub-task - excludes Epic/Story
+     */
+    public function getWorkItemDescendants(): \Illuminate\Support\Collection
+    {
+        $workItems = collect();
+        $children = $this->children()->with('issueType')->get();
+
+        foreach ($children as $child) {
+            if ($child->isContainer()) {
+                // Recursively get work items from container
+                $workItems = $workItems->merge($child->getWorkItemDescendants());
+            } else {
+                // This is a work item
+                $workItems->push($child);
+            }
+        }
+
+        return $workItems;
+    }
+
+    /**
+     * Get count of completed work items vs total
+     */
+    public function getWorkItemProgress(): array
+    {
+        $workItems = $this->getWorkItemDescendants();
+        $total = $workItems->count();
+        $completed = $workItems->where('is_complete', 1)->count();
+
+        return [
+            'completed' => $completed,
+            'total' => $total,
+            'percentage' => $total > 0 ? round(($completed / $total) * 100) : 0
+        ];
+    }
+
     protected static function boot()
     {
         parent::boot();

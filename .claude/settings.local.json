@@ -10,7 +10,11 @@
       "Bash(dir /b \"C:\\\\xampp\\\\htdocs\\\\techland-erp\\\\public\\\\js\")",
       "Bash(php -r:*)",
       "Bash(php assign_tracker_permission.php:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(php artisan migrate:status:*)",
+      "Bash(php artisan tinker:*)",
+      "Bash(php artisan db:seed:*)"
     ],
     "deny": [],
     "ask": []
