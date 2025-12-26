@@ -53,7 +53,32 @@ class ProjectTaskController extends Controller
                     $status['tasks'] = $task->where('stage_id', '=', $status->id)->get();
                 }
 
-                return view('project_task.index', compact('stages', 'stageClass', 'project'));
+                // Get Epics for this project
+                $epicType = \App\Models\IssueType::where('name', 'Epic')->where('is_container', true)->first();
+                $epics = collect();
+                if ($epicType) {
+                    $epics = ProjectTask::where('project_id', $project_id)
+                        ->where('issue_type_id', $epicType->id)
+                        ->orderBy('name', 'asc')
+                        ->get();
+                }
+
+                // Get User Stories for this project
+                $storyType = \App\Models\IssueType::where('name', 'Story')->where('is_container', true)->first();
+                $stories = collect();
+                if ($storyType) {
+                    $stories = ProjectTask::where('project_id', $project_id)
+                        ->where('issue_type_id', $storyType->id)
+                        ->orderBy('name', 'asc')
+                        ->get();
+                }
+
+                // Get Milestones for this project
+                $milestones = \App\Models\Milestone::where('project_id', $project_id)
+                    ->orderBy('title', 'asc')
+                    ->get();
+
+                return view('project_task.index', compact('stages', 'stageClass', 'project', 'epics', 'stories', 'milestones'));
             }else{
                 return redirect()->route('projects.index')->with('error', __('Projeat not found'));
             }
@@ -225,7 +250,42 @@ class ProjectTaskController extends Controller
     {
         if ($view == 'list')
         {
-            return view('project_task.taskboard', compact('view'));
+            $usr = Auth::user();
+            if (\Auth::user()->type == 'client')
+            {
+                $user_projects = Project::where('client_id', \Auth::user()->id)->pluck('id', 'id')->toArray();
+            }
+            elseif (\Auth::user()->type != 'client')
+            {
+                $user_projects = $usr->projects()->pluck('project_id', 'project_id')->toArray();
+            }
+
+            // Get projects for filter
+            $projects = Project::whereIn('id', $user_projects)->get();
+
+            // Get Epic issue type ID
+            $epicType = \App\Models\IssueType::where('name', 'Epic')->where('is_container', true)->first();
+            $epics = collect();
+            if ($epicType) {
+                $epics = ProjectTask::whereIn('project_id', $user_projects)
+                    ->where('issue_type_id', $epicType->id)
+                    ->where('created_by', $usr->creatorId())
+                    ->orderBy('name', 'asc')
+                    ->get();
+            }
+
+            // Get User Story issue type ID
+            $storyType = \App\Models\IssueType::where('name', 'Story')->where('is_container', true)->first();
+            $stories = collect();
+            if ($storyType) {
+                $stories = ProjectTask::whereIn('project_id', $user_projects)
+                    ->where('issue_type_id', $storyType->id)
+                    ->where('created_by', $usr->creatorId())
+                    ->orderBy('name', 'asc')
+                    ->get();
+            }
+
+            return view('project_task.taskboard', compact('view', 'projects', 'epics', 'stories'));
         }
         else
         {
@@ -248,6 +308,28 @@ class ProjectTaskController extends Controller
             // Get users for filter
             $users = User::where('created_by', $usr->creatorId())->where('type', '!=', 'client')->get();
 
+            // Get Epic issue type ID
+            $epicType = \App\Models\IssueType::where('name', 'Epic')->where('is_container', true)->first();
+            $epics = collect();
+            if ($epicType) {
+                $epics = ProjectTask::whereIn('project_id', $user_projects)
+                    ->where('issue_type_id', $epicType->id)
+                    ->where('created_by', $usr->creatorId())
+                    ->orderBy('name', 'asc')
+                    ->get();
+            }
+
+            // Get User Story issue type ID
+            $storyType = \App\Models\IssueType::where('name', 'Story')->where('is_container', true)->first();
+            $stories = collect();
+            if ($storyType) {
+                $stories = ProjectTask::whereIn('project_id', $user_projects)
+                    ->where('issue_type_id', $storyType->id)
+                    ->where('created_by', $usr->creatorId())
+                    ->orderBy('name', 'asc')
+                    ->get();
+            }
+
             // Group tasks by stage
             foreach($stages as $stage) {
                 $stageTasks = ProjectTask::whereIn('project_id', $user_projects)
@@ -258,7 +340,7 @@ class ProjectTaskController extends Controller
                 $stage->tasks = $stageTasks;
             }
 
-            return view('project_task.grid', compact('stages', 'projects', 'users', 'view'));
+            return view('project_task.grid', compact('stages', 'projects', 'users', 'view', 'epics', 'stories'));
 
         }
 
@@ -323,6 +405,29 @@ class ProjectTaskController extends Controller
             if (!empty($request->keyword)) {
                 $tasks->where('name', 'LIKE', $request->keyword . '%');
             }
+
+            // Filter by project
+            if (!empty($request->project_id)) {
+                $tasks->where('project_id', $request->project_id);
+            }
+
+            // Filter by Epic
+            if (!empty($request->epic_id)) {
+                $epicId = $request->epic_id;
+                // Get all stories under this epic
+                $storyIds = ProjectTask::where('parent_id', $epicId)->pluck('id')->toArray();
+                // Tasks directly under epic OR under stories that belong to this epic
+                $tasks->where(function($q) use ($epicId, $storyIds) {
+                    $q->where('parent_id', $epicId)
+                      ->orWhereIn('parent_id', $storyIds);
+                });
+            }
+
+            // Filter by Story
+            if (!empty($request->story_id)) {
+                $tasks->where('parent_id', $request->story_id);
+            }
+
             if (!empty($request->status)) {
                 $todaydate = date('Y-m-d');
 

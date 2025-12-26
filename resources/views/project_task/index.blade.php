@@ -557,6 +557,92 @@
                 font-size: 11px;
             }
         }
+
+        /* Parent Info (Epic/Story) */
+        .parent-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .parent-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .parent-badge.epic {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: #fff;
+        }
+
+        .parent-badge.story {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #fff;
+        }
+
+        .parent-badge i {
+            font-size: 11px;
+        }
+
+        /* Due Date Badges */
+        .due-date-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .due-date-badge.due-overdue {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+            animation: pulse-danger 2s infinite;
+        }
+
+        .due-date-badge.due-today {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #fff;
+            animation: pulse-warning 2s infinite;
+        }
+
+        .due-date-badge.due-soon {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        @keyframes pulse-danger {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { opacity: 0.9; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        /* Hours Badge */
+        .hours-badge {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+            color: #4338ca !important;
+            font-weight: 600;
+        }
+
+        .hours-badge i {
+            color: #4338ca;
+        }
     </style>
 @endpush
 @push('script-page')
@@ -1007,6 +1093,9 @@
         // ===== FILTER FUNCTIONALITY =====
         function filterTasks() {
             var search = $('#task_search').val().toLowerCase();
+            var epic = $('#filter_epic').val();
+            var story = $('#filter_story').val();
+            var milestone = $('#filter_milestone').val();
             var issueType = $('#issue_type_filter').val();
             var user = $('#filter_user').val();
             var priority = $('#filter_priority').val();
@@ -1021,12 +1110,31 @@
                 var taskUserIds = $card.data('user-ids') ? $card.data('user-ids').toString() : '';
                 var taskPriority = $card.data('priority') ? $card.data('priority').toString() : '';
                 var taskEndDate = $card.data('end-date') ? $card.data('end-date').toString() : '';
+                var taskEpic = $card.data('epic-id') ? $card.data('epic-id').toString() : '';
+                var taskStory = $card.data('story-id') ? $card.data('story-id').toString() : '';
+                var taskMilestone = $card.data('milestone-id') ? $card.data('milestone-id').toString() : '';
                 var isOverdue = taskEndDate && taskEndDate !== '0000-00-00' && taskEndDate < today;
+                var isDueToday = taskEndDate && taskEndDate === today;
 
                 var show = true;
 
                 // Search filter
                 if (search && taskTitle.indexOf(search) === -1) {
+                    show = false;
+                }
+
+                // Epic filter
+                if (epic && taskEpic !== epic) {
+                    show = false;
+                }
+
+                // Story filter
+                if (story && taskStory !== story) {
+                    show = false;
+                }
+
+                // Milestone filter
+                if (milestone && taskMilestone !== milestone) {
                     show = false;
                 }
 
@@ -1052,6 +1160,8 @@
                     }
                 } else if (quickFilter === 'overdue' && !isOverdue) {
                     show = false;
+                } else if (quickFilter === 'due_today' && !isDueToday) {
+                    show = false;
                 }
 
                 $card.toggle(show);
@@ -1069,14 +1179,40 @@
             });
         }
 
+        // Filter stories based on selected epic
+        $('#filter_epic').on('change', function() {
+            var selectedEpic = $(this).val();
+
+            // Filter stories dropdown based on selected epic
+            $('#filter_story option').each(function() {
+                if ($(this).val() === '') {
+                    $(this).show();
+                } else if (selectedEpic === '') {
+                    $(this).show();
+                } else if ($(this).data('epic') && $(this).data('epic').toString() === selectedEpic) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+            $('#filter_story').val('');
+
+            filterTasks();
+        });
+
         // Event listeners for filters
         $('#task_search').on('keyup', filterTasks);
-        $('#issue_type_filter, #filter_user, #filter_priority').on('change', filterTasks);
+        $('#filter_story, #filter_milestone, #issue_type_filter, #filter_user, #filter_priority').on('change', filterTasks);
 
         // Quick filter buttons
         $('.quick-filter-btn').on('click', function() {
             $('.quick-filter-btn').removeClass('active');
             $(this).addClass('active');
+            filterTasks();
+        });
+
+        // Apply default filter (My Tasks) on page load
+        $(document).ready(function() {
             filterTasks();
         });
     </script>
@@ -1107,17 +1243,44 @@
     <!-- Filter Bar -->
     <div class="filter-bar">
         <div class="row g-3 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="search-box">
                     <i class="ti ti-search"></i>
                     <input type="text" class="form-control" id="task_search" placeholder="{{__('Search tasks...')}}">
                 </div>
             </div>
             <div class="col-md-2">
+                <label>{{__('Epic')}}</label>
+                <select class="form-select" id="filter_epic">
+                    <option value="">{{__('All Epics')}}</option>
+                    @foreach($epics as $epic)
+                        <option value="{{ $epic->id }}">{{ $epic->issue_key ? $epic->issue_key . ' - ' : '' }}{{ Str::limit($epic->name, 25) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('User Story')}}</label>
+                <select class="form-select" id="filter_story">
+                    <option value="">{{__('All Stories')}}</option>
+                    @foreach($stories as $story)
+                        <option value="{{ $story->id }}" data-epic="{{ $story->parent_id }}">{{ $story->issue_key ? $story->issue_key . ' - ' : '' }}{{ Str::limit($story->name, 25) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Milestone')}}</label>
+                <select class="form-select" id="filter_milestone">
+                    <option value="">{{__('All Milestones')}}</option>
+                    @foreach($milestones as $milestone)
+                        <option value="{{ $milestone->id }}">{{ $milestone->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label>{{__('Issue Type')}}</label>
                 <select class="form-select" id="issue_type_filter">
                     <option value="">{{__('All Types')}}</option>
-                    @foreach(\App\Models\IssueType::where('is_active', true)->orderBy('order')->get() as $type)
+                    @foreach(\App\Models\IssueType::where('is_active', true)->where('is_container', false)->orderBy('order')->get() as $type)
                         <option value="{{ $type->id }}">{{ $type->name }}</option>
                     @endforeach
                 </select>
@@ -1140,11 +1303,14 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+        </div>
+        <div class="row g-3 mt-2">
+            <div class="col-md-12">
                 <div class="quick-filters">
-                    <button class="quick-filter-btn active" data-filter="all">{{__('All')}}</button>
-                    <button class="quick-filter-btn" data-filter="my_tasks">{{__('My Tasks')}}</button>
+                    <button class="quick-filter-btn" data-filter="all">{{__('All')}}</button>
+                    <button class="quick-filter-btn active" data-filter="my_tasks">{{__('My Tasks')}}</button>
                     <button class="quick-filter-btn" data-filter="overdue">{{__('Overdue')}}</button>
+                    <button class="quick-filter-btn" data-filter="due_today">{{__('Due Today')}}</button>
                 </div>
             </div>
         </div>
@@ -1164,7 +1330,45 @@
                             <div class="sales-item-wrp kanban-box" id="task-list-{{ $stage->id }}"
                                 data-status="{{ $stage->id }}">
                                 @foreach ($tasks as $taskDetail)
-                                    <div class="sales-item draggable-item" id="{{ $taskDetail->id }}" data-priority="{{ $taskDetail->priority }}" data-user-ids="{{ $taskDetail->assign_to }}" data-issue-type="{{ $taskDetail->issue_type_id }}" data-end-date="{{ $taskDetail->end_date }}">
+                                    <?php
+                                        $taskEpicId = '';
+                                        $taskStoryId = '';
+                                        $parentEpic = null;
+                                        $parentStory = null;
+                                        if ($taskDetail->parent_id) {
+                                            $parent = \App\Models\ProjectTask::find($taskDetail->parent_id);
+                                            if ($parent && $parent->issueType) {
+                                                if ($parent->issueType->name == 'Epic') {
+                                                    $taskEpicId = $parent->id;
+                                                    $parentEpic = $parent;
+                                                } elseif ($parent->issueType->name == 'Story') {
+                                                    $taskStoryId = $parent->id;
+                                                    $parentStory = $parent;
+                                                    if ($parent->parent_id) {
+                                                        $taskEpicId = $parent->parent_id;
+                                                        $parentEpic = \App\Models\ProjectTask::find($parent->parent_id);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // Calculate due date status
+                                        $dueDateClass = '';
+                                        $dueDateIcon = '';
+                                        if (!empty($taskDetail->end_date) && $taskDetail->end_date != '0000-00-00') {
+                                            $daysUntilDue = (int) \Carbon\Carbon::parse($taskDetail->end_date)->diffInDays(now(), false);
+                                            if ($daysUntilDue > 0) {
+                                                $dueDateClass = 'due-overdue';
+                                                $dueDateIcon = 'ti-alert-circle';
+                                            } elseif ($daysUntilDue == 0) {
+                                                $dueDateClass = 'due-today';
+                                                $dueDateIcon = 'ti-clock';
+                                            } elseif ($daysUntilDue >= -2) {
+                                                $dueDateClass = 'due-soon';
+                                                $dueDateIcon = 'ti-clock';
+                                            }
+                                        }
+                                    ?>
+                                    <div class="sales-item draggable-item" id="{{ $taskDetail->id }}" data-priority="{{ $taskDetail->priority }}" data-user-ids="{{ $taskDetail->assign_to }}" data-issue-type="{{ $taskDetail->issue_type_id }}" data-end-date="{{ $taskDetail->end_date }}" data-epic-id="{{ $taskEpicId }}" data-story-id="{{ $taskStoryId }}" data-milestone-id="{{ $taskDetail->milestone_id }}">
                                         <div class="sales-item-top">
                                             <div class="d-flex align-items-start justify-content-between">
                                                 <h5 class="flex-1">
@@ -1224,6 +1428,20 @@
                                                     {{ __(\App\Models\ProjectTask::$priority[$taskDetail->priority]) }}
                                                 </span>
                                             </div>
+                                            @if($parentEpic || $parentStory)
+                                                <div class="parent-info mt-2">
+                                                    @if($parentEpic)
+                                                        <span class="parent-badge epic" data-bs-toggle="tooltip" title="{{ $parentEpic->name }}">
+                                                            <i class="ti ti-bolt"></i> {{ $parentEpic->issue_key ?? Str::limit($parentEpic->name, 15) }}
+                                                        </span>
+                                                    @endif
+                                                    @if($parentStory)
+                                                        <span class="parent-badge story" data-bs-toggle="tooltip" title="{{ $parentStory->name }}">
+                                                            <i class="ti ti-bookmark"></i> {{ $parentStory->issue_key ?? Str::limit($parentStory->name, 15) }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="sales-item-center d-flex align-items-center justify-content-between">
                                             <ul class="d-flex flex-wrap align-items-center gap-1 p-0 m-0">
@@ -1242,10 +1460,17 @@
                                                         {{ $taskDetail->taskProgress($taskDetail)['percentage'] }}
                                                     </li>
                                                 @endif
+                                                @if($taskDetail->estimated_hours > 0)
+                                                    <li class="d-inline-flex align-items-center gap-1 hours-badge" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
+                                                        <i class="ti ti-hourglass"></i>{{ $taskDetail->estimated_hours }}h
+                                                    </li>
+                                                @endif
                                             </ul>
                                             @if (!empty($taskDetail->end_date) && $taskDetail->end_date != '0000-00-00')
-                                                <span data-bs-toggle="tooltip" title="{{ __('Due') }}"
-                                                    @if (strtotime($taskDetail->end_date) < time()) class="text-danger" @endif>{{ \Carbon\Carbon::parse($taskDetail->end_date)->format('M d') }}</span>
+                                                <span class="due-date-badge {{ $dueDateClass }}" data-bs-toggle="tooltip" title="{{ __('Due: ') . \Carbon\Carbon::parse($taskDetail->end_date)->format('M d, Y') }}">
+                                                    @if($dueDateIcon)<i class="ti {{ $dueDateIcon }}"></i>@endif
+                                                    {{ \Carbon\Carbon::parse($taskDetail->end_date)->format('M d') }}
+                                                </span>
                                             @endif
                                         </div>
                                         <div class="sales-item-bottom d-flex align-items-center justify-content-between">

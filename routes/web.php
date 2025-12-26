@@ -145,6 +145,8 @@ use App\Http\Controllers\ZoomMeetingController;
 use App\Http\Controllers\XenditPaymentController;
 use App\Http\Controllers\MidtransPaymentController;
 use App\Http\Controllers\ProjectExpenseController;
+use App\Http\Controllers\GithubWebhookController;
+use App\Http\Controllers\ProductivityController;
 use App\Http\Controllers\NepalstePaymnetController;
 use App\Http\Controllers\OzowPaymentController;
 use App\Http\Controllers\PaiementProController;
@@ -1647,3 +1649,54 @@ Route::group(
 );
 
 Route::get('payslip/payslipPdf/{id}/{month}', [PaySlipController::class, 'payslipPdf'])->name('payslip.payslipPdf')->middleware(['XSS']);
+
+/*
+|--------------------------------------------------------------------------
+| GitHub Webhook & Developer Productivity Routes
+|--------------------------------------------------------------------------
+|
+| These routes handle GitHub webhook integration and developer activity
+| tracking dashboards. This tracks ACTIVITY, not performance quality.
+|
+*/
+
+// GitHub Webhook Endpoint (No auth required, signature validated in controller)
+// Rate limited to 60 requests per minute
+Route::post('github/webhook', [GithubWebhookController::class, 'handle'])
+    ->name('github.webhook')
+    ->middleware(['throttle:60,1']);
+
+// Productivity Dashboard Routes (Authenticated)
+Route::group([
+    'prefix' => 'productivity',
+    'middleware' => ['auth', 'XSS', 'revalidate'],
+], function () {
+
+    // Developer's own dashboard
+    Route::get('my-activity', [ProductivityController::class, 'developerDashboard'])
+        ->name('productivity.my-activity');
+
+    // Admin routes
+    Route::get('dashboard', [ProductivityController::class, 'adminDashboard'])
+        ->name('productivity.admin-dashboard');
+
+    Route::get('developer/{username}', [ProductivityController::class, 'viewDeveloper'])
+        ->name('productivity.view-developer');
+
+    // GitHub username mappings management
+    Route::get('mappings', [ProductivityController::class, 'manageMappings'])
+        ->name('productivity.mappings');
+
+    Route::post('mappings', [ProductivityController::class, 'storeMapping'])
+        ->name('productivity.mappings.store');
+
+    Route::delete('mappings/{id}', [ProductivityController::class, 'deleteMapping'])
+        ->name('productivity.mappings.delete');
+
+    // GitHub sync settings
+    Route::get('sync-settings', [ProductivityController::class, 'syncSettings'])
+        ->name('productivity.sync-settings');
+
+    Route::post('sync-commits', [ProductivityController::class, 'syncCommits'])
+        ->name('productivity.sync-commits');
+});

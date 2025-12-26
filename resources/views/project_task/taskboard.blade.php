@@ -4,6 +4,36 @@
     {{__('Tasks')}}
 @endsection
 
+@push('css-page')
+    <style>
+        .filter-bar-list {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .filter-bar-list label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .filter-bar-list .form-select {
+            font-size: 13px;
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            height: 40px;
+        }
+        .filter-bar-list .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+    </style>
+@endpush
 
 @section('breadcrumb')
     <li class="breadcrumb-item"><a href="{{route('dashboard')}}">{{__('Dashboard')}}</a></li>
@@ -66,6 +96,42 @@
 
 
 @section('content')
+    <!-- Filter Bar -->
+    <div class="filter-bar-list">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label>{{__('Project')}}</label>
+                <select class="form-select" id="filter_project">
+                    <option value="">{{__('All Projects')}}</option>
+                    @foreach($projects as $project)
+                        <option value="{{ $project->id }}">{{ $project->project_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label>{{__('Epic')}}</label>
+                <select class="form-select" id="filter_epic">
+                    <option value="">{{__('All Epics')}}</option>
+                    @foreach($epics as $epic)
+                        <option value="{{ $epic->id }}" data-project="{{ $epic->project_id }}">{{ $epic->issue_key ? $epic->issue_key . ' - ' : '' }}{{ Str::limit($epic->name, 30) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label>{{__('User Story')}}</label>
+                <select class="form-select" id="filter_story">
+                    <option value="">{{__('All Stories')}}</option>
+                    @foreach($stories as $story)
+                        <option value="{{ $story->id }}" data-project="{{ $story->project_id }}" data-epic="{{ $story->parent_id }}">{{ $story->issue_key ? $story->issue_key . ' - ' : '' }}{{ Str::limit($story->name, 30) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="task_keyword" placeholder="{{__('Search by task name...')}}">
+            </div>
+        </div>
+    </div>
+
     <div class="row min-750" id="taskboard_view"></div>
 @endsection
 
@@ -117,17 +183,81 @@
             $(document).on('keyup', '#task_keyword', function () {
                 ajaxFilterTaskView(sort, $(this).val(), status);
             });
+
+            // Filter by project - also filter epic/story dropdowns
+            $('#filter_project').on('change', function() {
+                var selectedProject = $(this).val();
+
+                // Filter epics dropdown
+                $('#filter_epic option').each(function() {
+                    if ($(this).val() === '') {
+                        $(this).show();
+                    } else if (selectedProject === '' || $(this).data('project').toString() === selectedProject) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+                $('#filter_epic').val('');
+
+                // Filter stories dropdown
+                $('#filter_story option').each(function() {
+                    if ($(this).val() === '') {
+                        $(this).show();
+                    } else if (selectedProject === '' || $(this).data('project').toString() === selectedProject) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+                $('#filter_story').val('');
+
+                ajaxFilterTaskView(sort, $('#task_keyword').val(), status);
+            });
+
+            // Filter by epic - also filter story dropdown
+            $('#filter_epic').on('change', function() {
+                var selectedEpic = $(this).val();
+
+                // Filter stories dropdown based on selected epic
+                $('#filter_story option').each(function() {
+                    if ($(this).val() === '') {
+                        $(this).show();
+                    } else if (selectedEpic === '') {
+                        $(this).show();
+                    } else if ($(this).data('epic') && $(this).data('epic').toString() === selectedEpic) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+                $('#filter_story').val('');
+
+                ajaxFilterTaskView(sort, $('#task_keyword').val(), status);
+            });
+
+            // Filter by story
+            $('#filter_story').on('change', function() {
+                ajaxFilterTaskView(sort, $('#task_keyword').val(), status);
+            });
         });
 
         // For Filter
         function ajaxFilterTaskView(task_sort, keyword = '', status = '') {
             var mainEle = $('#taskboard_view');
             var view = '{{$view}}';
+            var projectId = $('#filter_project').val();
+            var epicId = $('#filter_epic').val();
+            var storyId = $('#filter_story').val();
+
             var data = {
                 view: view,
                 sort: task_sort,
                 keyword: keyword,
                 status: status,
+                project_id: projectId,
+                epic_id: epicId,
+                story_id: storyId,
             }
 
             $.ajax({

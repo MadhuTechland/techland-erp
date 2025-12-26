@@ -1179,6 +1179,37 @@
                                                 href="{{ route('project_report.index') }}">{{ __('Project Report') }}</a>
                                         </li>
                                     @endif
+                                    {{-- Developer Activity Menu --}}
+                                    <li
+                                        class="dash-item dash-hasmenu {{ Request::segment(1) == 'productivity' ? 'active dash-trigger' : '' }}">
+                                        <a class="dash-link"
+                                            href="#">{{ __('Developer Activity') }}<span
+                                                class="dash-arrow"><i data-feather="chevron-right"></i></span></a>
+                                        <ul class="dash-submenu">
+                                            <li
+                                                class="dash-item {{ Request::route()->getName() == 'productivity.my-activity' ? 'active' : '' }}">
+                                                <a class="dash-link"
+                                                    href="{{ route('productivity.my-activity') }}">{{ __('My Activity') }}</a>
+                                            </li>
+                                            @if (\Auth::user()->type == 'company')
+                                                <li
+                                                    class="dash-item {{ Request::route()->getName() == 'productivity.admin-dashboard' ? 'active' : '' }}">
+                                                    <a class="dash-link"
+                                                        href="{{ route('productivity.admin-dashboard') }}">{{ __('All Developers') }}</a>
+                                                </li>
+                                                <li
+                                                    class="dash-item {{ Request::route()->getName() == 'productivity.mappings' ? 'active' : '' }}">
+                                                    <a class="dash-link"
+                                                        href="{{ route('productivity.mappings') }}">{{ __('GitHub Mappings') }}</a>
+                                                </li>
+                                                <li
+                                                    class="dash-item {{ Request::route()->getName() == 'productivity.sync-settings' ? 'active' : '' }}">
+                                                    <a class="dash-link"
+                                                        href="{{ route('productivity.sync-settings') }}">{{ __('Sync Settings') }}</a>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </li>
                                     @if (Gate::check('manage project task stage') || Gate::check('manage bug status'))
                                         <li
                                             class="dash-item dash-hasmenu {{ Request::segment(1) == 'bugstatus' || Request::segment(1) == 'project-task-stages' ? 'active dash-trigger' : '' }}">

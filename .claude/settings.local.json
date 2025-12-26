@@ -14,7 +14,11 @@
       "Bash(php artisan migrate:*)",
       "Bash(php artisan migrate:status:*)",
       "Bash(php artisan tinker:*)",
-      "Bash(php artisan db:seed:*)"
+      "Bash(php artisan db:seed:*)",
+      "Bash(findstr:*)",
+      "Bash(php -l:*)",
+      "Bash(php artisan view:clear:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
