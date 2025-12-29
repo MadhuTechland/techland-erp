@@ -1144,7 +1144,7 @@
                                     @can('manage project task')
                                         <li class="dash-item {{ request()->is('taskboard*') ? 'active' : '' }}">
                                             <a class="dash-link"
-                                                href="{{ route('taskBoard.view', 'list') }}">{{ __('Tasks') }}</a>
+                                                href="{{ route('taskBoard.view', 'grid') }}">{{ __('Tasks') }}</a>
                                         </li>
                                     @endcan
                                     @can('manage timesheet')
@@ -1509,7 +1509,7 @@
 
                 @if (Gate::check('manage project task'))
                     <li class="dash-item dash-hasmenu  {{ Request::segment(1) == 'taskboard' ? ' active' : '' }}">
-                        <a href="{{ route('taskBoard.view', 'list') }}" class="dash-link">
+                        <a href="{{ route('taskBoard.view', 'grid') }}" class="dash-link">
                             <span class="dash-micon"><i class="ti ti-list-check"></i></span><span
                                 class="dash-mtext">{{ __('Tasks') }}</span>
                         </a>

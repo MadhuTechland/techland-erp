@@ -1420,8 +1420,12 @@
                                                     <span class="badge bg-secondary">{{ $taskDetail->issue_key }}</span>
                                                 @endif
                                                 @if($taskDetail->issueType)
-                                                    <span class="badge bg-{{ $taskDetail->issueType->color }}" data-issue-type-id="{{ $taskDetail->issueType->id }}">
-                                                        <i class="{{ $taskDetail->issueType->icon }}"></i> {{ $taskDetail->issueType->name }}
+                                                    <span class="badge" style="background: {{ $taskDetail->issueType->color ?? '#5e6c84' }}; color: #fff; {{ (strtolower($taskDetail->issueType->color ?? '') == '#ffffff' || strtolower($taskDetail->issueType->color ?? '') == '#fff' || strtolower($taskDetail->issueType->color ?? '') == 'white') ? 'color: #333;' : '' }}" data-issue-type-id="{{ $taskDetail->issueType->id }}">
+                                                        <i class="{{ $taskDetail->issueType->icon ?? 'ti ti-subtask' }}"></i> {{ $taskDetail->issueType->name }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge" style="background: #5e6c84; color: #fff;">
+                                                        <i class="ti ti-subtask"></i> {{ __('Task') }}
                                                     </span>
                                                 @endif
                                                 <span class="badge bg-light-{{ \App\Models\ProjectTask::$priority_color[$taskDetail->priority] }}">

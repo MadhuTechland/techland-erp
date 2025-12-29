@@ -242,7 +242,24 @@
 
         .task-badge.issue-type {
             color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            background: #5e6c84; /* fallback */
+        }
+
+        /* If background is light, use dark text */
+        .task-badge.issue-type[style*="background: #fff"],
+        .task-badge.issue-type[style*="background: #FFF"],
+        .task-badge.issue-type[style*="background:#fff"],
+        .task-badge.issue-type[style*="background:#FFF"] {
+            color: #333 !important;
+            text-shadow: none;
+        }
+
+        /* Default task type (when no issue type set) */
+        .task-badge.task-type-default {
+            background: #5e6c84;
+            color: #fff;
         }
 
         /* Task Footer */
@@ -731,8 +748,12 @@
                                 @endif
                                 <div class="task-card-meta">
                                     @if($task->issueType)
-                                        <span class="task-badge issue-type" style="background: {{ $task->issueType->color ?? '#5e6c84' }}">
+                                        <span class="task-badge issue-type" style="background: {{ $task->issueType->color ?? '#5e6c84' }}; {{ (strtolower($task->issueType->color ?? '') == '#ffffff' || strtolower($task->issueType->color ?? '') == '#fff' || strtolower($task->issueType->color ?? '') == 'white') ? 'color: #333; text-shadow: none;' : '' }}">
                                             <i class="{{ $task->issueType->icon ?? 'ti ti-subtask' }}"></i> {{ $task->issueType->name }}
+                                        </span>
+                                    @else
+                                        <span class="task-badge task-type-default">
+                                            <i class="ti ti-subtask"></i> {{ __('Task') }}
                                         </span>
                                     @endif
                                     <span class="task-badge priority-{{ strtolower(\App\Models\ProjectTask::$priority[$task->priority] ?? 'medium') }}">

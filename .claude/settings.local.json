@@ -18,7 +18,8 @@
       "Bash(findstr:*)",
       "Bash(php -l:*)",
       "Bash(php artisan view:clear:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(del C:xampphtdocstechland-erptest_github.php)"
     ],
     "deny": [],
     "ask": []

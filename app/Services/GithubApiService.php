@@ -32,23 +32,16 @@ class GithubApiService
     }
 
     /**
-     * Fetch commits from a repository
+     * Fetch all branches from a repository
      */
-    public function fetchCommits(string $repoFullName, ?string $since = null, ?string $until = null, int $perPage = 100): array
+    public function fetchBranches(string $repoFullName): array
     {
-        $allCommits = [];
+        $allBranches = [];
         $page = 1;
 
-        // Default to last 30 days if not specified
-        if (!$since) {
-            $since = Carbon::now()->subDays(30)->toIso8601String();
-        }
-
         do {
-            $response = $this->makeRequest("repos/{$repoFullName}/commits", [
-                'since' => $since,
-                'until' => $until,
-                'per_page' => $perPage,
+            $response = $this->makeRequest("repos/{$repoFullName}/branches", [
+                'per_page' => 100,
                 'page' => $page,
             ]);
 
@@ -56,15 +49,75 @@ class GithubApiService
                 break;
             }
 
-            $allCommits = array_merge($allCommits, $response);
+            $allBranches = array_merge($allBranches, $response);
             $page++;
 
-            // Safety limit to prevent infinite loops
-            if ($page > 50) {
+            if ($page > 10) {
                 break;
             }
 
-        } while (count($response) === $perPage);
+        } while (count($response) === 100);
+
+        return $allBranches;
+    }
+
+    /**
+     * Fetch commits from a repository (all branches)
+     */
+    public function fetchCommits(string $repoFullName, ?string $since = null, ?string $until = null, int $perPage = 100): array
+    {
+        $allCommits = [];
+        $seenShas = [];
+
+        // Default to last 30 days if not specified
+        if (!$since) {
+            $since = Carbon::now()->subDays(30)->toIso8601String();
+        }
+
+        // Get all branches
+        $branches = $this->fetchBranches($repoFullName);
+
+        if (empty($branches)) {
+            // Fallback to default branch if we can't get branches
+            $branches = [['name' => 'main'], ['name' => 'master']];
+        }
+
+        foreach ($branches as $branch) {
+            $branchName = $branch['name'];
+            $page = 1;
+
+            do {
+                $response = $this->makeRequest("repos/{$repoFullName}/commits", [
+                    'sha' => $branchName,
+                    'since' => $since,
+                    'until' => $until,
+                    'per_page' => $perPage,
+                    'page' => $page,
+                ]);
+
+                if (empty($response)) {
+                    break;
+                }
+
+                // Add commits, avoiding duplicates (same commit can be in multiple branches)
+                foreach ($response as $commit) {
+                    $sha = $commit['sha'];
+                    if (!isset($seenShas[$sha])) {
+                        $seenShas[$sha] = true;
+                        $commit['_branch'] = $branchName; // Track which branch
+                        $allCommits[] = $commit;
+                    }
+                }
+
+                $page++;
+
+                // Safety limit per branch
+                if ($page > 20) {
+                    break;
+                }
+
+            } while (count($response) === $perPage);
+        }
 
         return $allCommits;
     }
