@@ -68,7 +68,7 @@
             border-radius: 16px;
             display: flex;
             flex-direction: column;
-            max-height: calc(100vh - 300px);
+            max-height: calc(100vh - 200px);
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.8);
             overflow: hidden;
@@ -80,6 +80,23 @@
         .kanban-column:nth-child(4) .kanban-column-header { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
         .kanban-column:nth-child(5) .kanban-column-header { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
         .kanban-column:nth-child(6) .kanban-column-header { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .kanban-column:nth-child(7) .kanban-column-header { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .kanban-column:nth-child(8) .kanban-column-header { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+        .kanban-column:nth-child(9) .kanban-column-header { background: linear-gradient(135deg, #667eea 0%, #5a4fcf 100%); }
+        .kanban-column:nth-child(10) .kanban-column-header { background: linear-gradient(135deg, #f5576c 0%, #d63384 100%); }
+        .kanban-column:nth-child(11) .kanban-column-header { background: linear-gradient(135deg, #20c997 0%, #0dcaf0 100%); }
+        .kanban-column:nth-child(12) .kanban-column-header { background: linear-gradient(135deg, #6f42c1 0%, #d63384 100%); }
+
+        /* Make kanban board scrollable during drag */
+        .kanban-board {
+            scroll-behavior: smooth;
+            cursor: grab;
+        }
+
+        .kanban-board.dragging-active {
+            cursor: grabbing;
+            scroll-behavior: auto;
+        }
 
         .kanban-column-header {
             padding: 14px 16px;
@@ -153,6 +170,7 @@
 
         .task-card-body {
             padding: 14px;
+            position: relative;
         }
 
         /* Card Top Border Accent */
@@ -502,12 +520,35 @@
 
         /* Hours Badge */
         .task-badge.hours {
-            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-            color: #4338ca;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 5px 10px;
         }
 
         .task-badge.hours i {
-            color: #4338ca;
+            color: #92400e;
+            font-size: 12px;
+        }
+
+        /* Hours display in card header */
+        .task-hours-display {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+        }
+
+        .task-hours-display i {
+            font-size: 11px;
+            margin-right: 3px;
         }
 
         /* Due Date Styling */
@@ -717,6 +758,11 @@
                         ?>
                         <div class="task-card" data-task-id="{{ $task->id }}" data-project-id="{{ $task->project_id }}" data-user-id="{{ $task->assign_to }}" data-priority="{{ $task->priority }}" data-epic-id="{{ $taskEpicId }}" data-story-id="{{ $taskStoryId }}" data-issue-type="{{ $task->issue_type_id }}">
                             <div class="task-card-body">
+                                @if($task->estimated_hours > 0)
+                                    <span class="task-hours-display" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
+                                        <i class="ti ti-clock"></i>{{ $task->estimated_hours }}h
+                                    </span>
+                                @endif
                                 <div class="task-card-meta">
                                     @if($task->issue_key)
                                         <span class="issue-key">{{ $task->issue_key }}</span>
@@ -826,6 +872,52 @@
     <script src="{{ asset('assets/js/plugins/dragula.min.js') }}"></script>
     <script>
         $(document).ready(function() {
+            // ===== DRAG-SCROLL FUNCTIONALITY =====
+            // Enables horizontal scrolling when dragging cards near edges
+            var kanbanBoard = document.querySelector('.kanban-board');
+            var scrollSpeed = 15;
+            var scrollZone = 100; // pixels from edge to trigger scroll
+            var scrollInterval = null;
+            var isDragging = false;
+
+            if (kanbanBoard) {
+                // Mouse wheel horizontal scroll
+                kanbanBoard.addEventListener('wheel', function(e) {
+                    if (e.deltaY !== 0) {
+                        e.preventDefault();
+                        kanbanBoard.scrollLeft += e.deltaY;
+                    }
+                }, { passive: false });
+
+                // Auto-scroll during drag
+                document.addEventListener('mousemove', function(e) {
+                    if (!isDragging) return;
+
+                    var rect = kanbanBoard.getBoundingClientRect();
+                    var mouseX = e.clientX - rect.left;
+
+                    clearInterval(scrollInterval);
+
+                    if (mouseX < scrollZone) {
+                        // Scroll left
+                        scrollInterval = setInterval(function() {
+                            kanbanBoard.scrollLeft -= scrollSpeed;
+                        }, 16);
+                    } else if (mouseX > rect.width - scrollZone) {
+                        // Scroll right
+                        scrollInterval = setInterval(function() {
+                            kanbanBoard.scrollLeft += scrollSpeed;
+                        }, 16);
+                    }
+                });
+
+                document.addEventListener('mouseup', function() {
+                    isDragging = false;
+                    clearInterval(scrollInterval);
+                    kanbanBoard.classList.remove('dragging-active');
+                });
+            }
+
             // Initialize Dragula for drag and drop
             var containers = [];
             $('.kanban-column-body').each(function() {
@@ -836,6 +928,18 @@
                 moves: function(el, container, handle) {
                     return !el.classList.contains('kanban-empty');
                 }
+            });
+
+            // Track dragging state for scroll
+            drake.on('drag', function(el) {
+                isDragging = true;
+                if (kanbanBoard) kanbanBoard.classList.add('dragging-active');
+            });
+
+            drake.on('dragend', function(el) {
+                isDragging = false;
+                clearInterval(scrollInterval);
+                if (kanbanBoard) kanbanBoard.classList.remove('dragging-active');
             });
 
             drake.on('drop', function(el, target, source, sibling) {

@@ -91,11 +91,36 @@
 
         /* Kanban box / task container */
         .kanban-box {
-            min-height: 100px;
+            min-height: 200px;
             padding: 12px;
-            max-height: calc(100vh - 320px);
+            max-height: calc(100vh - 220px);
             overflow-y: auto;
             background: #f8fafc;
+        }
+
+        /* Make kanban wrapper scrollable during drag */
+        .kanban-wrapper {
+            scroll-behavior: smooth;
+            cursor: grab;
+        }
+
+        .kanban-wrapper.dragging-active {
+            cursor: grabbing;
+            scroll-behavior: auto;
+        }
+
+        /* Add more column gradients for additional stages */
+        .kanban-wrapper > .col:nth-child(9) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #5a4fcf 100%);
+        }
+        .kanban-wrapper > .col:nth-child(10) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #f5576c 0%, #d63384 100%);
+        }
+        .kanban-wrapper > .col:nth-child(11) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #20c997 0%, #0dcaf0 100%);
+        }
+        .kanban-wrapper > .col:nth-child(12) .crm-sales-card .card-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #d63384 100%);
         }
 
         .kanban-box::-webkit-scrollbar {
@@ -635,13 +660,41 @@
 
         /* Hours Badge */
         .hours-badge {
-            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
-            color: #4338ca !important;
-            font-weight: 600;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+            color: #92400e !important;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 5px 10px !important;
         }
 
         .hours-badge i {
-            color: #4338ca;
+            color: #92400e;
+            font-size: 12px;
+        }
+
+        /* Hours display in card header */
+        .task-hours-display {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+            z-index: 5;
+        }
+
+        .task-hours-display i {
+            font-size: 11px;
+            margin-right: 3px;
+        }
+
+        /* Make sales-item-top relative for absolute positioning */
+        .sales-item-top {
+            position: relative;
         }
     </style>
 @endpush
@@ -712,6 +765,74 @@
         }(window.jQuery);
 
         $(document).ready(function() {
+            // ===== DRAG-SCROLL FUNCTIONALITY =====
+            // Enables horizontal scrolling when dragging cards near edges
+            var kanbanWrapper = document.querySelector('.kanban-wrapper');
+            var scrollSpeed = 15;
+            var scrollZone = 100; // pixels from edge to trigger scroll
+            var scrollInterval = null;
+            var isDragging = false;
+
+            // Listen for dragula drag events
+            if (kanbanWrapper) {
+                // Mouse wheel horizontal scroll
+                kanbanWrapper.addEventListener('wheel', function(e) {
+                    if (e.deltaY !== 0) {
+                        e.preventDefault();
+                        kanbanWrapper.scrollLeft += e.deltaY;
+                    }
+                }, { passive: false });
+
+                // Auto-scroll during drag
+                document.addEventListener('mousemove', function(e) {
+                    if (!isDragging) return;
+
+                    var rect = kanbanWrapper.getBoundingClientRect();
+                    var mouseX = e.clientX - rect.left;
+
+                    clearInterval(scrollInterval);
+
+                    if (mouseX < scrollZone) {
+                        // Scroll left
+                        scrollInterval = setInterval(function() {
+                            kanbanWrapper.scrollLeft -= scrollSpeed;
+                        }, 16);
+                    } else if (mouseX > rect.width - scrollZone) {
+                        // Scroll right
+                        scrollInterval = setInterval(function() {
+                            kanbanWrapper.scrollLeft += scrollSpeed;
+                        }, 16);
+                    }
+                });
+
+                // Track drag state
+                document.addEventListener('mousedown', function(e) {
+                    if (e.target.closest('.sales-item')) {
+                        isDragging = true;
+                        kanbanWrapper.classList.add('dragging-active');
+                    }
+                });
+
+                document.addEventListener('mouseup', function() {
+                    isDragging = false;
+                    clearInterval(scrollInterval);
+                    kanbanWrapper.classList.remove('dragging-active');
+                });
+
+                // Also handle dragula events if available
+                if (typeof dragula !== 'undefined') {
+                    var observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.target.classList.contains('gu-mirror')) {
+                                isDragging = true;
+                                kanbanWrapper.classList.add('dragging-active');
+                            }
+                        });
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }
+            }
+
             /*Set assign_to Value*/
             $(document).on('click', '.add_usr', function() {
                 var ids = [];
@@ -1370,6 +1491,11 @@
                                     ?>
                                     <div class="sales-item draggable-item" id="{{ $taskDetail->id }}" data-priority="{{ $taskDetail->priority }}" data-user-ids="{{ $taskDetail->assign_to }}" data-issue-type="{{ $taskDetail->issue_type_id }}" data-end-date="{{ $taskDetail->end_date }}" data-epic-id="{{ $taskEpicId }}" data-story-id="{{ $taskStoryId }}" data-milestone-id="{{ $taskDetail->milestone_id }}">
                                         <div class="sales-item-top">
+                                            @if($taskDetail->estimated_hours > 0)
+                                                <span class="task-hours-display" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
+                                                    <i class="ti ti-clock"></i>{{ $taskDetail->estimated_hours }}h
+                                                </span>
+                                            @endif
                                             <div class="d-flex align-items-start justify-content-between">
                                                 <h5 class="flex-1">
                                                     @if($taskDetail->parent)
