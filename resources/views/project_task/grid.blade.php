@@ -881,8 +881,22 @@
             var isDragging = false;
 
             if (kanbanBoard) {
-                // Mouse wheel horizontal scroll
+                // Mouse wheel horizontal scroll - only when not over a column body
                 kanbanBoard.addEventListener('wheel', function(e) {
+                    // Check if mouse is over a scrollable column body
+                    var target = e.target;
+                    var columnBody = target.closest('.kanban-column-body');
+
+                    // If over a column body that has scrollable content, let it scroll vertically
+                    if (columnBody) {
+                        var hasVerticalScroll = columnBody.scrollHeight > columnBody.clientHeight;
+                        if (hasVerticalScroll) {
+                            // Allow normal vertical scroll within column
+                            return;
+                        }
+                    }
+
+                    // Otherwise, convert to horizontal scroll
                     if (e.deltaY !== 0) {
                         e.preventDefault();
                         kanbanBoard.scrollLeft += e.deltaY;

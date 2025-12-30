@@ -775,8 +775,22 @@
 
             // Listen for dragula drag events
             if (kanbanWrapper) {
-                // Mouse wheel horizontal scroll
+                // Mouse wheel horizontal scroll - only when not over a column body
                 kanbanWrapper.addEventListener('wheel', function(e) {
+                    // Check if mouse is over a scrollable column body (kanban-box)
+                    var target = e.target;
+                    var columnBody = target.closest('.kanban-box');
+
+                    // If over a column body that has scrollable content, let it scroll vertically
+                    if (columnBody) {
+                        var hasVerticalScroll = columnBody.scrollHeight > columnBody.clientHeight;
+                        if (hasVerticalScroll) {
+                            // Allow normal vertical scroll within column
+                            return;
+                        }
+                    }
+
+                    // Otherwise, convert to horizontal scroll
                     if (e.deltaY !== 0) {
                         e.preventDefault();
                         kanbanWrapper.scrollLeft += e.deltaY;
