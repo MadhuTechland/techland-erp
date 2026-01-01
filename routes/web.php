@@ -1699,4 +1699,82 @@ Route::group([
 
     Route::post('sync-commits', [ProductivityController::class, 'syncCommits'])
         ->name('productivity.sync-commits');
+
+    // AI Code Review routes
+    Route::get('code-reviews', [ProductivityController::class, 'codeReviews'])
+        ->name('productivity.code-reviews');
+
+    Route::get('test-google-chat', [\App\Http\Controllers\GitHubWebhookController::class, 'testGoogleChat'])
+        ->name('productivity.test-google-chat');
+
+    Route::get('test-review', [\App\Http\Controllers\GitHubWebhookController::class, 'testReview'])
+        ->name('productivity.test-review');
+});
+
+// GitHub Webhook (no auth required - GitHub will call this)
+Route::post('webhooks/github', [\App\Http\Controllers\GitHubWebhookController::class, 'handleWebhook'])
+    ->name('webhooks.github')
+    ->withoutMiddleware(['web', 'auth']);
+
+// Code Review Routes
+Route::middleware(['auth', 'XSS'])->prefix('code-reviews')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CodeReviewController::class, 'index'])
+        ->name('code-reviews.index');
+
+    Route::get('/my-reviews', [\App\Http\Controllers\CodeReviewController::class, 'myReviews'])
+        ->name('code-reviews.my-reviews');
+
+    Route::get('/mappings', [\App\Http\Controllers\CodeReviewController::class, 'mappings'])
+        ->name('code-reviews.mappings');
+
+    Route::post('/mappings', [\App\Http\Controllers\CodeReviewController::class, 'storeMapping'])
+        ->name('code-reviews.mappings.store');
+
+    Route::get('/mappings/{id}/delete', [\App\Http\Controllers\CodeReviewController::class, 'deleteMapping'])
+        ->name('code-reviews.mappings.delete');
+
+    Route::get('/{id}', [\App\Http\Controllers\CodeReviewController::class, 'show'])
+        ->name('code-reviews.show');
+
+    Route::post('/{reviewId}/action/{issueIndex}', [\App\Http\Controllers\CodeReviewController::class, 'takeAction'])
+        ->name('code-reviews.action');
+});
+
+// Focus Forest Routes (Pomodoro Timer)
+Route::middleware(['auth', 'XSS'])->prefix('focus')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FocusSessionController::class, 'index'])
+        ->name('focus.index');
+
+    Route::get('/garden', [\App\Http\Controllers\FocusSessionController::class, 'garden'])
+        ->name('focus.garden');
+
+    Route::get('/status', [\App\Http\Controllers\FocusSessionController::class, 'status'])
+        ->name('focus.status');
+
+    Route::get('/leaderboard', [\App\Http\Controllers\FocusSessionController::class, 'leaderboard'])
+        ->name('focus.leaderboard');
+
+    Route::post('/start', [\App\Http\Controllers\FocusSessionController::class, 'start'])
+        ->name('focus.start');
+
+    Route::post('/settings', [\App\Http\Controllers\FocusSessionController::class, 'updateSettings'])
+        ->name('focus.settings.update');
+
+    Route::get('/project/{project}/tasks', [\App\Http\Controllers\FocusSessionController::class, 'getProjectTasks'])
+        ->name('focus.project.tasks');
+
+    Route::post('/{session}/tick', [\App\Http\Controllers\FocusSessionController::class, 'tick'])
+        ->name('focus.tick');
+
+    Route::post('/{session}/complete', [\App\Http\Controllers\FocusSessionController::class, 'complete'])
+        ->name('focus.complete');
+
+    Route::post('/{session}/pause', [\App\Http\Controllers\FocusSessionController::class, 'pause'])
+        ->name('focus.pause');
+
+    Route::post('/{session}/resume', [\App\Http\Controllers\FocusSessionController::class, 'resume'])
+        ->name('focus.resume');
+
+    Route::post('/{session}/abandon', [\App\Http\Controllers\FocusSessionController::class, 'abandon'])
+        ->name('focus.abandon');
 });

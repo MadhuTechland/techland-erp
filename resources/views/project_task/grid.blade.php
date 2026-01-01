@@ -532,25 +532,7 @@
             font-size: 12px;
         }
 
-        /* Hours display in card header */
-        .task-hours-display {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
-            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
-        }
-
-        .task-hours-display i {
-            font-size: 11px;
-            margin-right: 3px;
-        }
-
+        
         /* Due Date Styling */
         .task-due-date {
             font-size: 11px;
@@ -690,6 +672,14 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-lg col-md-3">
+                <label>{{__('Deadline From')}}</label>
+                <input type="date" class="form-control" id="filter_date_from">
+            </div>
+            <div class="col-lg col-md-3">
+                <label>{{__('Deadline To')}}</label>
+                <input type="date" class="form-control" id="filter_date_to">
+            </div>
         </div>
         <div class="row g-3 mt-2">
             <div class="col-md-12">
@@ -756,13 +746,8 @@
                                 }
                             }
                         ?>
-                        <div class="task-card" data-task-id="{{ $task->id }}" data-project-id="{{ $task->project_id }}" data-user-id="{{ $task->assign_to }}" data-priority="{{ $task->priority }}" data-epic-id="{{ $taskEpicId }}" data-story-id="{{ $taskStoryId }}" data-issue-type="{{ $task->issue_type_id }}">
+                        <div class="task-card" data-task-id="{{ $task->id }}" data-project-id="{{ $task->project_id }}" data-user-id="{{ $task->assign_to }}" data-priority="{{ $task->priority }}" data-epic-id="{{ $taskEpicId }}" data-story-id="{{ $taskStoryId }}" data-issue-type="{{ $task->issue_type_id }}" data-end-date="{{ $task->end_date && $task->end_date != '0000-00-00' ? \Carbon\Carbon::parse($task->end_date)->format('Y-m-d') : '' }}">
                             <div class="task-card-body">
-                                @if($task->estimated_hours > 0)
-                                    <span class="task-hours-display" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
-                                        <i class="ti ti-clock"></i>{{ $task->estimated_hours }}h
-                                    </span>
-                                @endif
                                 <div class="task-card-meta">
                                     @if($task->issue_key)
                                         <span class="issue-key">{{ $task->issue_key }}</span>
@@ -805,9 +790,9 @@
                                     <span class="task-badge priority-{{ strtolower(\App\Models\ProjectTask::$priority[$task->priority] ?? 'medium') }}">
                                         {{ __(\App\Models\ProjectTask::$priority[$task->priority] ?? 'Medium') }}
                                     </span>
-                                    @if($task->estimated_hours > 0)
-                                        <span class="task-badge hours">
-                                            <i class="ti ti-hourglass"></i> {{ $task->estimated_hours }}h
+                                    @if($task->estimated_hrs > 0)
+                                        <span class="task-badge hours" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
+                                            <i class="ti ti-clock"></i> {{ $task->estimated_hrs }}h
                                         </span>
                                     @endif
                                 </div>
@@ -1004,6 +989,8 @@
                 var issueType = $('#filter_issue_type').val();
                 var user = $('#filter_user').val();
                 var priority = $('#filter_priority').val();
+                var dateFrom = $('#filter_date_from').val();
+                var dateTo = $('#filter_date_to').val();
                 var quickFilter = $('.quick-filter-btn.active').data('filter');
                 var today = new Date().toISOString().split('T')[0];
 
@@ -1016,6 +1003,7 @@
                     var taskEpic = $card.data('epic-id') ? $card.data('epic-id').toString() : '';
                     var taskStory = $card.data('story-id') ? $card.data('story-id').toString() : '';
                     var taskIssueType = $card.data('issue-type') ? $card.data('issue-type').toString() : '';
+                    var taskEndDate = $card.data('end-date') ? $card.data('end-date').toString() : '';
                     var isOverdue = $card.find('.task-due-date.overdue').length > 0;
                     var dueDate = $card.find('.task-due-date').text().trim();
 
@@ -1054,6 +1042,18 @@
                     // Priority filter
                     if (priority && taskPriority !== priority) {
                         show = false;
+                    }
+
+                    // Date range filters
+                    if (dateFrom && taskEndDate) {
+                        if (taskEndDate < dateFrom) {
+                            show = false;
+                        }
+                    }
+                    if (dateTo && taskEndDate) {
+                        if (taskEndDate > dateTo) {
+                            show = false;
+                        }
                     }
 
                     // Quick filters
@@ -1141,7 +1141,7 @@
 
             // Event listeners for filters
             $('#task_search').on('keyup', filterTasks);
-            $('#filter_story, #filter_issue_type, #filter_user, #filter_priority').on('change', filterTasks);
+            $('#filter_story, #filter_issue_type, #filter_user, #filter_priority, #filter_date_from, #filter_date_to').on('change', filterTasks);
 
             // Quick filter buttons
             $('.quick-filter-btn').on('click', function() {

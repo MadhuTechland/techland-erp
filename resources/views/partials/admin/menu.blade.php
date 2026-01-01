@@ -1210,6 +1210,54 @@
                                             @endif
                                         </ul>
                                     </li>
+
+                                    {{-- AI Code Reviews Menu --}}
+                                    <li
+                                        class="dash-item dash-hasmenu {{ Request::segment(1) == 'code-reviews' ? 'active dash-trigger' : '' }}">
+                                        <a class="dash-link"
+                                            href="#">{{ __('AI Code Reviews') }}<span
+                                                class="dash-arrow"><i data-feather="chevron-right"></i></span></a>
+                                        <ul class="dash-submenu">
+                                            <li
+                                                class="dash-item {{ Request::route()->getName() == 'code-reviews.my-reviews' ? 'active' : '' }}">
+                                                <a class="dash-link"
+                                                    href="{{ route('code-reviews.my-reviews') }}">{{ __('My Reviews') }}</a>
+                                            </li>
+                                            @if (\Auth::user()->type == 'company')
+                                                <li
+                                                    class="dash-item {{ Request::route()->getName() == 'code-reviews.index' ? 'active' : '' }}">
+                                                    <a class="dash-link"
+                                                        href="{{ route('code-reviews.index') }}">{{ __('All Reviews') }}</a>
+                                                </li>
+                                                <li
+                                                    class="dash-item {{ Request::route()->getName() == 'code-reviews.mappings' ? 'active' : '' }}">
+                                                    <a class="dash-link"
+                                                        href="{{ route('code-reviews.mappings') }}">{{ __('User Mappings') }}</a>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </li>
+
+                                    {{-- Focus Forest Menu --}}
+                                    <li
+                                        class="dash-item dash-hasmenu {{ Request::segment(1) == 'focus' ? 'active dash-trigger' : '' }}">
+                                        <a class="dash-link"
+                                            href="#">{{ __('Focus Forest') }}<span
+                                                class="dash-arrow"><i data-feather="chevron-right"></i></span></a>
+                                        <ul class="dash-submenu">
+                                            <li
+                                                class="dash-item {{ Request::route()->getName() == 'focus.index' ? 'active' : '' }}">
+                                                <a class="dash-link"
+                                                    href="{{ route('focus.index') }}">{{ __('Focus Timer') }}</a>
+                                            </li>
+                                            <li
+                                                class="dash-item {{ Request::route()->getName() == 'focus.garden' ? 'active' : '' }}">
+                                                <a class="dash-link"
+                                                    href="{{ route('focus.garden') }}">{{ __('My Forest') }}</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+
                                     @if (Gate::check('manage project task stage') || Gate::check('manage bug status'))
                                         <li
                                             class="dash-item dash-hasmenu {{ Request::segment(1) == 'bugstatus' || Request::segment(1) == 'project-task-stages' ? 'active dash-trigger' : '' }}">

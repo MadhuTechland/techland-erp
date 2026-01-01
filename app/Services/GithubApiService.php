@@ -133,19 +133,29 @@ class GithubApiService
     /**
      * Sync commits from a repository to database
      */
-    public function syncRepository(string $repoFullName, ?string $since = null, ?string $until = null, callable $progressCallback = null): array
+    public function syncRepository(string $repoFullName, ?string $since = null, ?string $until = null, callable $progressCallback = null, int $minLines = 0): array
     {
         $stats = [
             'repo' => $repoFullName,
             'fetched' => 0,
             'new' => 0,
             'skipped' => 0,
+            'skipped_exists' => 0,
+            'skipped_merge' => 0,
+            'skipped_small' => 0,
             'errors' => 0,
+            'branches_found' => 0,
+            'authors' => [],
         ];
 
         $repoName = $this->extractRepoName($repoFullName);
         $commits = $this->fetchCommits($repoFullName, $since, $until);
         $stats['fetched'] = count($commits);
+
+        // Log branches info
+        $branches = $this->fetchBranches($repoFullName);
+        $stats['branches_found'] = count($branches);
+        $stats['branch_names'] = array_column($branches, 'name');
 
         foreach ($commits as $index => $commitData) {
             try {
@@ -154,18 +164,29 @@ class GithubApiService
                 // Skip if commit already exists
                 if (GithubCommit::where('commit_sha', $sha)->exists()) {
                     $stats['skipped']++;
+                    $stats['skipped_exists']++;
                     continue;
                 }
 
                 // Skip merge commits
                 if (isset($commitData['parents']) && count($commitData['parents']) > 1) {
                     $stats['skipped']++;
+                    $stats['skipped_merge']++;
                     continue;
                 }
 
-                // Get commit author
-                $authorUsername = $commitData['author']['login'] ??
-                                  $commitData['commit']['author']['name'] ?? 'unknown';
+                // Get commit author - try multiple sources
+                $authorLogin = $commitData['author']['login'] ?? null;
+                $authorName = $commitData['commit']['author']['name'] ?? null;
+                $authorEmail = $commitData['commit']['author']['email'] ?? null;
+
+                // Use login if available, otherwise use name
+                $authorUsername = $authorLogin ?? $authorName ?? 'unknown';
+
+                // Track unique authors for debugging
+                if (!in_array($authorUsername, $stats['authors'])) {
+                    $stats['authors'][] = $authorUsername;
+                }
 
                 // Fetch detailed commit info for file stats
                 $details = $this->fetchCommitDetails($repoFullName, $sha);
@@ -174,15 +195,27 @@ class GithubApiService
                 $linesAdded = $details['stats']['additions'] ?? 0;
                 $linesDeleted = $details['stats']['deletions'] ?? 0;
 
-                // Skip very small commits (less than 10 lines changed)
+                // Skip very small commits if minLines is set
                 $totalLines = $linesAdded + $linesDeleted;
-                if ($totalLines < 10) {
+                if ($minLines > 0 && $totalLines < $minLines) {
                     $stats['skipped']++;
+                    $stats['skipped_small']++;
                     continue;
                 }
 
-                // Get user mapping if exists
-                $mapping = GithubUserMapping::where('github_username', $authorUsername)->first();
+                // Get user mapping if exists - try both login and name (case-insensitive)
+                $mapping = GithubUserMapping::whereRaw('LOWER(github_username) = ?', [strtolower($authorUsername)])->first();
+
+                // If no mapping found by login, try by author name
+                if (!$mapping && $authorName && $authorName !== $authorUsername) {
+                    $mapping = GithubUserMapping::whereRaw('LOWER(github_username) = ?', [strtolower($authorName)])->first();
+                }
+
+                // Also try by email prefix (before @)
+                if (!$mapping && $authorEmail) {
+                    $emailPrefix = explode('@', $authorEmail)[0];
+                    $mapping = GithubUserMapping::whereRaw('LOWER(github_username) = ?', [strtolower($emailPrefix)])->first();
+                }
 
                 // Create commit record
                 GithubCommit::create([
@@ -195,6 +228,8 @@ class GithubApiService
                     'lines_deleted' => $linesDeleted,
                     'committed_at' => Carbon::parse($commitData['commit']['author']['date'] ?? now()),
                     'user_id' => $mapping?->user_id,
+                    'branch' => $commitData['_branch'] ?? null,
+                    'author_email' => $authorEmail,
                 ]);
 
                 $stats['new']++;

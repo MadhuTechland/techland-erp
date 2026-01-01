@@ -235,6 +235,14 @@
     <!-- [ Main Content ] end -->
     </div>
 </div>
+
+{{-- Focus Forest Floating Widget --}}
+@auth
+    @if(Request::segment(1) !== 'focus')
+        @include('focus.partials.floating-widget')
+    @endif
+@endauth
+
 <div class="modal fade" id="commonModal" tabindex="-1" role="dialog"
      aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">

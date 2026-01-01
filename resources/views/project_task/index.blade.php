@@ -672,29 +672,18 @@
             font-size: 12px;
         }
 
-        /* Hours display in card header */
-        .task-hours-display {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
-            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
-            z-index: 5;
-        }
-
-        .task-hours-display i {
-            font-size: 11px;
-            margin-right: 3px;
-        }
-
         /* Make sales-item-top relative for absolute positioning */
         .sales-item-top {
             position: relative;
+        }
+
+        /* 3-dots menu accessible (show on hover) */
+        .btn-group.card-option {
+            z-index: 10;
+        }
+
+        .sales-item:hover .btn-group.card-option {
+            opacity: 1;
         }
     </style>
 @endpush
@@ -1234,6 +1223,8 @@
             var issueType = $('#issue_type_filter').val();
             var user = $('#filter_user').val();
             var priority = $('#filter_priority').val();
+            var dateFrom = $('#filter_date_from').val();
+            var dateTo = $('#filter_date_to').val();
             var quickFilter = $('.quick-filter-btn.active').data('filter');
             var today = new Date().toISOString().split('T')[0];
             var currentUserId = '{{ Auth::user()->id }}';
@@ -1288,6 +1279,18 @@
                     show = false;
                 }
 
+                // Date range filters
+                if (dateFrom && taskEndDate && taskEndDate !== '0000-00-00') {
+                    if (taskEndDate < dateFrom) {
+                        show = false;
+                    }
+                }
+                if (dateTo && taskEndDate && taskEndDate !== '0000-00-00') {
+                    if (taskEndDate > dateTo) {
+                        show = false;
+                    }
+                }
+
                 // Quick filters
                 if (quickFilter === 'my_tasks') {
                     if (taskUserIds.indexOf(currentUserId) === -1) {
@@ -1337,7 +1340,7 @@
 
         // Event listeners for filters
         $('#task_search').on('keyup', filterTasks);
-        $('#filter_story, #filter_milestone, #issue_type_filter, #filter_user, #filter_priority').on('change', filterTasks);
+        $('#filter_story, #filter_milestone, #issue_type_filter, #filter_user, #filter_priority, #filter_date_from, #filter_date_to').on('change', filterTasks);
 
         // Quick filter buttons
         $('.quick-filter-btn').on('click', function() {
@@ -1438,6 +1441,14 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-2">
+                <label>{{__('Deadline From')}}</label>
+                <input type="date" class="form-control" id="filter_date_from">
+            </div>
+            <div class="col-md-2">
+                <label>{{__('Deadline To')}}</label>
+                <input type="date" class="form-control" id="filter_date_to">
+            </div>
         </div>
         <div class="row g-3 mt-2">
             <div class="col-md-12">
@@ -1505,11 +1516,6 @@
                                     ?>
                                     <div class="sales-item draggable-item" id="{{ $taskDetail->id }}" data-priority="{{ $taskDetail->priority }}" data-user-ids="{{ $taskDetail->assign_to }}" data-issue-type="{{ $taskDetail->issue_type_id }}" data-end-date="{{ $taskDetail->end_date }}" data-epic-id="{{ $taskEpicId }}" data-story-id="{{ $taskStoryId }}" data-milestone-id="{{ $taskDetail->milestone_id }}">
                                         <div class="sales-item-top">
-                                            @if($taskDetail->estimated_hours > 0)
-                                                <span class="task-hours-display" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
-                                                    <i class="ti ti-clock"></i>{{ $taskDetail->estimated_hours }}h
-                                                </span>
-                                            @endif
                                             <div class="d-flex align-items-start justify-content-between">
                                                 <h5 class="flex-1">
                                                     @if($taskDetail->parent)
@@ -1571,6 +1577,11 @@
                                                 <span class="badge bg-light-{{ \App\Models\ProjectTask::$priority_color[$taskDetail->priority] }}">
                                                     {{ __(\App\Models\ProjectTask::$priority[$taskDetail->priority]) }}
                                                 </span>
+                                                @if($taskDetail->estimated_hrs > 0)
+                                                    <span class="badge hours-badge" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
+                                                        <i class="ti ti-clock"></i> {{ $taskDetail->estimated_hrs }}h
+                                                    </span>
+                                                @endif
                                             </div>
                                             @if($parentEpic || $parentStory)
                                                 <div class="parent-info mt-2">
@@ -1602,11 +1613,6 @@
                                                 @if (str_replace('%', '', $taskDetail->taskProgress($taskDetail)['percentage']) > 0)
                                                     <li class="d-inline-flex align-items-center gap-1" data-bs-toggle="tooltip" title="{{ __('Progress') }}">
                                                         {{ $taskDetail->taskProgress($taskDetail)['percentage'] }}
-                                                    </li>
-                                                @endif
-                                                @if($taskDetail->estimated_hours > 0)
-                                                    <li class="d-inline-flex align-items-center gap-1 hours-badge" data-bs-toggle="tooltip" title="{{ __('Estimated Hours') }}">
-                                                        <i class="ti ti-hourglass"></i>{{ $taskDetail->estimated_hours }}h
                                                     </li>
                                                 @endif
                                             </ul>

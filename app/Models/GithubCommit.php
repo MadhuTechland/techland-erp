@@ -40,9 +40,11 @@ class GithubCommit extends Model
      */
     protected $fillable = [
         'github_username',
+        'author_email',
         'repo_name',
         'commit_sha',
         'commit_message',
+        'branch',
         'files_changed',
         'lines_added',
         'lines_deleted',
