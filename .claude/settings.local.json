@@ -19,7 +19,19 @@
       "Bash(php -l:*)",
       "Bash(php artisan view:clear:*)",
       "Bash(dir:*)",
-      "Bash(del C:xampphtdocstechland-erptest_github.php)"
+      "Bash(del C:xampphtdocstechland-erptest_github.php)",
+      "Bash(php test_github_debug.php:*)",
+      "Bash(echo.)",
+      "Bash(where:*)",
+      "Bash(php test_code_review.php:*)",
+      "Bash(php check_table.php:*)",
+      "Bash(timeout /t 20 /nobreak)",
+      "Bash(php:*)",
+      "Bash(del C:xampphtdocstechland-erptest_code_review.php C:xampphtdocstechland-erpcheck_gemini_models.php C:xampphtdocstechland-erpcheck_table.php)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(del /f nul test_github_debug.php)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

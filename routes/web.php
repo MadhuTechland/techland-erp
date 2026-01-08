@@ -1778,3 +1778,11 @@ Route::middleware(['auth', 'XSS'])->prefix('focus')->group(function () {
     Route::post('/{session}/abandon', [\App\Http\Controllers\FocusSessionController::class, 'abandon'])
         ->name('focus.abandon');
 });
+
+// Resource Timeline Routes
+Route::middleware(['auth', 'XSS'])->prefix('resource-timeline')->group(function () {
+    Route::get('/', [\App\Http\Controllers\ResourceTimelineController::class, 'index'])
+        ->name('resource.timeline');
+    Route::get('/data', [\App\Http\Controllers\ResourceTimelineController::class, 'getTimelineData'])
+        ->name('resource.timeline.data');
+});

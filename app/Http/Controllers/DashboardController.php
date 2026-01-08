@@ -723,6 +723,24 @@ class DashboardController extends Controller
             $tracker->total_time = Utility::diffance_to_time($tracker->start_time, $tracker->end_time);
             $tracker->save();
 
+            // Auto-fill timesheet with tracked time
+            if ($tracker->total_time > 0 && $tracker->task_id) {
+                $hours = floor($tracker->total_time / 3600);
+                $minutes = floor(($tracker->total_time % 3600) / 60);
+
+                // Only create timesheet if at least 1 minute was tracked
+                if ($hours > 0 || $minutes > 0) {
+                    Timesheet::create([
+                        'project_id' => $tracker->project_id,
+                        'task_id' => $tracker->task_id,
+                        'date' => date('Y-m-d', strtotime($tracker->start_time)),
+                        'time' => sprintf('%02d:%02d', $hours, $minutes),
+                        'description' => 'Auto-logged from time tracker: ' . ($tracker->name ?: 'Task work'),
+                        'created_by' => $tracker->user_id ?? Auth::user()->id,
+                    ]);
+                }
+            }
+
             return Utility::success_res(__('Add Time successfully.'));
         }
 

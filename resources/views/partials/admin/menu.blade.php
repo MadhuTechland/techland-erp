@@ -1258,6 +1258,14 @@
                                         </ul>
                                     </li>
 
+                                    {{-- Resource Timeline Menu --}}
+                                    <li class="dash-item {{ Request::segment(1) == 'resource-timeline' ? 'active' : '' }}">
+                                        <a class="dash-link" href="{{ route('resource.timeline') }}">
+                                            <span class="dash-micon"><i class="ti ti-calendar-time"></i></span>
+                                            <span class="dash-mtext">{{ __('Resource Timeline') }}</span>
+                                        </a>
+                                    </li>
+
                                     @if (Gate::check('manage project task stage') || Gate::check('manage bug status'))
                                         <li
                                             class="dash-item dash-hasmenu {{ Request::segment(1) == 'bugstatus' || Request::segment(1) == 'project-task-stages' ? 'active dash-trigger' : '' }}">
