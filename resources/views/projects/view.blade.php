@@ -186,6 +186,19 @@
                 {{ __('Gantt Chart') }}
             </a>
         @endcan
+        @can('manage project task')
+            <a href="{{ route('sprints.planning', $project->id) }}" class="btn btn-sm btn-primary me-1">
+                <i class="ti ti-layout-kanban"></i> {{ __('Sprint Planning') }}
+            </a>
+            @php
+                $activeSprint = \App\Models\Sprint::where('project_id', $project->id)->where('status', 'active')->first();
+            @endphp
+            @if($activeSprint)
+                <a href="{{ route('sprints.board', [$project->id, $activeSprint->id]) }}" class="btn btn-sm btn-success me-1">
+                    <i class="ti ti-columns"></i> {{ $activeSprint->name }}
+                </a>
+            @endif
+        @endcan
         @if (\Auth::user()->type != 'client' || \Auth::user()->type == 'client')
             <a href="{{ route('projecttime.tracker', $project->id) }}"
                 class="btn btn-sm bg-brown-subtitle text-white me-1">

@@ -23,16 +23,20 @@ class ProjectTask extends Model
         'assign_to',
         'project_id',
         'milestone_id',
+        'sprint_id',
         'stage_id',
         'order',
+        'backlog_order',
         'created_by',
         'is_favourite',
         'is_complete',
         'marked_at',
+        'completed_at',
         'progress',
         'issue_type_id',
         'issue_key',
         'parent_id',
+        'story_points',
     ];
 
     public static $priority = [
@@ -234,6 +238,23 @@ class ProjectTask extends Model
     public function parent()
     {
         return $this->belongsTo('App\Models\ProjectTask', 'parent_id');
+    }
+
+    public function sprint()
+    {
+        return $this->belongsTo('App\Models\Sprint', 'sprint_id');
+    }
+
+    // Scope for backlog items (no sprint assigned)
+    public function scopeInBacklog($query)
+    {
+        return $query->whereNull('sprint_id');
+    }
+
+    // Scope for sprint items
+    public function scopeInSprint($query, $sprintId)
+    {
+        return $query->where('sprint_id', $sprintId);
     }
 
     public function children()

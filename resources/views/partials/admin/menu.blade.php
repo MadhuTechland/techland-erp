@@ -1266,6 +1266,15 @@
                                         </a>
                                     </li>
 
+                                    {{-- BRD Parser Menu --}}
+                                    <li class="dash-item {{ Request::segment(1) == 'brd-parser' ? 'active' : '' }}">
+                                        <a class="dash-link" href="{{ route('brd.index') }}">
+                                            <span class="dash-micon"><i class="ti ti-file-analytics"></i></span>
+                                            <span class="dash-mtext">{{ __('BRD Parser') }}</span>
+                                            <span class="badge bg-primary rounded-pill ms-2">AI</span>
+                                        </a>
+                                    </li>
+
                                     @if (Gate::check('manage project task stage') || Gate::check('manage bug status'))
                                         <li
                                             class="dash-item dash-hasmenu {{ Request::segment(1) == 'bugstatus' || Request::segment(1) == 'project-task-stages' ? 'active dash-trigger' : '' }}">

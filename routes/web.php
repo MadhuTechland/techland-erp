@@ -976,6 +976,31 @@ Route::get('projects/milestone/{id}/show', [ProjectController::class, 'milestone
 
 // End Milestone
 
+// Sprint Module
+Route::get('projects/{id}/sprint-planning', [App\Http\Controllers\SprintController::class, 'planning'])->name('sprints.planning')->middleware(['auth', 'XSS']);
+Route::get('projects/{id}/sprint-board/{sprintId?}', [App\Http\Controllers\SprintController::class, 'board'])->name('sprints.board')->middleware(['auth', 'XSS']);
+Route::get('projects/{id}/sprints/create', [App\Http\Controllers\SprintController::class, 'create'])->name('sprints.create')->middleware(['auth', 'XSS']);
+Route::post('projects/{id}/sprints', [App\Http\Controllers\SprintController::class, 'store'])->name('sprints.store')->middleware(['auth', 'XSS']);
+Route::get('projects/{id}/sprints/{sprintId}/edit', [App\Http\Controllers\SprintController::class, 'edit'])->name('sprints.edit')->middleware(['auth', 'XSS']);
+Route::put('projects/{id}/sprints/{sprintId}', [App\Http\Controllers\SprintController::class, 'update'])->name('sprints.update')->middleware(['auth', 'XSS']);
+Route::delete('projects/{id}/sprints/{sprintId}', [App\Http\Controllers\SprintController::class, 'destroy'])->name('sprints.destroy')->middleware(['auth', 'XSS']);
+Route::post('projects/{id}/sprints/{sprintId}/start', [App\Http\Controllers\SprintController::class, 'start'])->name('sprints.start')->middleware(['auth', 'XSS']);
+Route::post('projects/{id}/sprints/{sprintId}/complete', [App\Http\Controllers\SprintController::class, 'complete'])->name('sprints.complete')->middleware(['auth', 'XSS']);
+Route::post('projects/{id}/sprints/{sprintId}/move-incomplete', [App\Http\Controllers\SprintController::class, 'moveIncompleteTasks'])->name('sprints.move-incomplete')->middleware(['auth', 'XSS']);
+Route::post('sprints/move-task', [App\Http\Controllers\SprintController::class, 'moveTask'])->name('sprints.move-task')->middleware(['auth', 'XSS']);
+Route::post('sprints/reorder-tasks', [App\Http\Controllers\SprintController::class, 'reorderTasks'])->name('sprints.reorder-tasks')->middleware(['auth', 'XSS']);
+Route::post('sprints/update-task-stage', [App\Http\Controllers\SprintController::class, 'updateTaskStage'])->name('sprints.update-task-stage')->middleware(['auth', 'XSS']);
+Route::post('tasks/{taskId}/story-points', [App\Http\Controllers\SprintController::class, 'updateStoryPoints'])->name('tasks.update-story-points')->middleware(['auth', 'XSS']);
+Route::get('projects/{id}/sprints/{sprintId}/burndown', [App\Http\Controllers\SprintController::class, 'burndownData'])->name('sprints.burndown')->middleware(['auth', 'XSS']);
+Route::get('projects/{id}/velocity', [App\Http\Controllers\SprintController::class, 'velocityData'])->name('sprints.velocity')->middleware(['auth', 'XSS']);
+
+// Bug Sprint Integration
+Route::post('sprints/move-bug', [App\Http\Controllers\SprintController::class, 'moveBug'])->name('sprints.move-bug')->middleware(['auth', 'XSS']);
+Route::post('sprints/reorder-bugs', [App\Http\Controllers\SprintController::class, 'reorderBugs'])->name('sprints.reorder-bugs')->middleware(['auth', 'XSS']);
+Route::post('sprints/update-bug-status', [App\Http\Controllers\SprintController::class, 'updateBugStatus'])->name('sprints.update-bug-status')->middleware(['auth', 'XSS']);
+Route::post('bugs/{bugId}/story-points', [App\Http\Controllers\SprintController::class, 'updateBugStoryPoints'])->name('bugs.update-story-points')->middleware(['auth', 'XSS']);
+// End Sprint Module
+
 // Project Module
 
 Route::get('invite-project-member/{id}', [ProjectController::class, 'inviteMemberView'])->name('invite.project.member.view')->middleware(['auth', 'XSS']);
@@ -1785,4 +1810,32 @@ Route::middleware(['auth', 'XSS'])->prefix('resource-timeline')->group(function 
         ->name('resource.timeline');
     Route::get('/data', [\App\Http\Controllers\ResourceTimelineController::class, 'getTimelineData'])
         ->name('resource.timeline.data');
+});
+
+// BRD Parser Routes
+Route::middleware(['auth', 'XSS'])->prefix('brd-parser')->group(function () {
+    Route::get('/', [\App\Http\Controllers\BrdParserController::class, 'index'])
+        ->name('brd.index');
+    Route::post('/upload', [\App\Http\Controllers\BrdParserController::class, 'uploadBrd'])
+        ->name('brd.upload');
+    Route::get('/{brd}/team', [\App\Http\Controllers\BrdParserController::class, 'teamSetup'])
+        ->name('brd.team');
+    Route::post('/{brd}/team', [\App\Http\Controllers\BrdParserController::class, 'saveTeam'])
+        ->name('brd.team.save');
+    Route::get('/{brd}/milestones', [\App\Http\Controllers\BrdParserController::class, 'milestoneSetup'])
+        ->name('brd.milestones');
+    Route::post('/{brd}/milestones', [\App\Http\Controllers\BrdParserController::class, 'saveMilestones'])
+        ->name('brd.milestones.save');
+    Route::get('/{brd}/review', [\App\Http\Controllers\BrdParserController::class, 'reviewBacklog'])
+        ->name('brd.review');
+    Route::post('/{brd}/generate', [\App\Http\Controllers\BrdParserController::class, 'generateBacklog'])
+        ->name('brd.generate');
+    Route::get('/{brd}/status', [\App\Http\Controllers\BrdParserController::class, 'getParsingStatus'])
+        ->name('brd.status');
+    Route::post('/{brd}/update-task', [\App\Http\Controllers\BrdParserController::class, 'updateTask'])
+        ->name('brd.update-task');
+    Route::post('/{brd}/confirm', [\App\Http\Controllers\BrdParserController::class, 'confirmBacklog'])
+        ->name('brd.confirm');
+    Route::get('/skills/suggestions', [\App\Http\Controllers\BrdParserController::class, 'getSkillSuggestions'])
+        ->name('brd.skills.suggestions');
 });

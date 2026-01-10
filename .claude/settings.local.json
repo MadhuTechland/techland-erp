@@ -31,7 +31,14 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(del /f nul test_github_debug.php)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(composer install:*)",
+      "Bash(composer remove:*)",
+      "Bash(composer require:*)",
+      "Bash(composer dump-autoload:*)",
+      "WebSearch",
+      "WebFetch(domain:puter.com)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

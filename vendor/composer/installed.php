@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'laravel/laravel',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => 'a20f949e1f69af5bd432c6f3ce48e16689257761',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -596,9 +596,9 @@
             'dev_requirement' => false,
         ),
         'laravel/laravel' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => 'a20f949e1f69af5bd432c6f3ce48e16689257761',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -1418,6 +1418,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'smalot/pdfparser' => array(
+            'pretty_version' => 'v2.12.3',
+            'version' => '2.12.3.0',
+            'reference' => '61c9bcafcb92899b76d8ebda6508267bae77e264',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../smalot/pdfparser',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'spatie/backtrace' => array(
             'pretty_version' => '1.6.2',
             'version' => '1.6.2.0',
@@ -1504,6 +1513,15 @@
             'replaced' => array(
                 0 => '*',
             ),
+        ),
+        'spatie/pdf-to-text' => array(
+            'pretty_version' => '1.54.1',
+            'version' => '1.54.1.0',
+            'reference' => 'ad2a792c7e1e68f1bc9b038dc73cdcf760595fbb',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../spatie/pdf-to-text',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'spatie/temporary-directory' => array(
             'pretty_version' => '2.2.1',

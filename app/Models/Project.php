@@ -86,7 +86,8 @@ class Project extends Model
         'in_progress' => 'In Progress',
         'on_hold' => 'On Hold',
         'complete' => 'Complete',
-        'canceled' => 'Canceled'
+        'canceled' => 'Canceled',
+        'incomplete' => 'Incomplete',
     ];
 
     public static $status_color = [
@@ -94,6 +95,7 @@ class Project extends Model
         'in_progress' => 'info',
         'complete' => 'success',
         'canceled' => 'danger',
+        'incomplete' => 'secondary',
     ];
 
     public function milestones()

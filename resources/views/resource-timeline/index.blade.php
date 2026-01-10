@@ -166,21 +166,25 @@
     }
 
     .timeline-grid {
-        display: table;
         width: 100%;
         min-width: 900px;
+    }
+
+    .timeline-table {
+        width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
     }
 
-    .timeline-row {
-        display: table-row;
+    .timeline-table thead {
+        background: rgba(0, 0, 0, 0.02);
     }
 
-    .timeline-row:hover .timeline-user-cell {
+    .timeline-row:hover td {
         background: rgba(99, 102, 241, 0.03);
     }
 
-    .timeline-row.no-tasks {
+    .timeline-row.no-tasks td {
         background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.03) 100%);
     }
 
@@ -188,16 +192,11 @@
         border-left: 3px solid #ef4444;
     }
 
-    .timeline-header-row {
-        background: rgba(0, 0, 0, 0.02);
-    }
-
-    .timeline-cell {
-        display: table-cell;
+    .timeline-table td,
+    .timeline-table th {
         padding: 12px 8px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        vertical-align: middle;
-        position: relative;
+        vertical-align: top;
     }
 
     .timeline-header-cell {
@@ -206,14 +205,19 @@
         text-transform: uppercase;
         color: #6c757d;
         text-align: center;
-        padding: 16px 8px;
-        min-width: 80px;
-        border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+        padding: 16px 8px !important;
+        min-width: 100px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.08) !important;
+        background: rgba(0, 0, 0, 0.02);
     }
 
     .timeline-header-cell.today {
-        background: rgba(99, 102, 241, 0.1);
+        background: rgba(99, 102, 241, 0.15) !important;
         color: var(--bs-primary, #6366f1);
+    }
+
+    .today-cell {
+        background: rgba(99, 102, 241, 0.05);
     }
 
     .timeline-header-cell .day-number {
@@ -224,14 +228,23 @@
     }
 
     .timeline-user-cell {
-        width: 220px;
-        min-width: 220px;
-        padding: 12px 16px;
+        width: 240px;
+        min-width: 240px;
+        max-width: 240px;
+        padding: 12px 16px !important;
         position: sticky;
         left: 0;
-        background: var(--bs-card-bg, #fff);
+        background: var(--bs-card-bg, #fff) !important;
         z-index: 10;
         border-right: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .timeline-row:hover .timeline-user-cell {
+        background: rgba(99, 102, 241, 0.03) !important;
+    }
+
+    .timeline-row.no-tasks .timeline-user-cell {
+        background: rgba(239, 68, 68, 0.08) !important;
     }
 
     .user-info {
@@ -283,40 +296,46 @@
     /* Task Blocks Container */
     .timeline-tasks-cell {
         position: relative;
-        min-height: 56px;
+        padding: 8px 4px !important;
+        vertical-align: top;
     }
 
-    .tasks-row {
+    .tasks-container {
         display: flex;
-        gap: 4px;
-        flex-wrap: nowrap;
-        position: relative;
-        min-height: 48px;
-        align-items: center;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 50px;
+    }
+
+    .tasks-container.tasks-horizontal {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .tasks-horizontal .task-block {
+        flex: 0 0 auto;
+        min-width: 200px;
+        max-width: 300px;
     }
 
     /* Task Block */
     .task-block {
-        position: absolute;
-        top: 4px;
-        height: calc(100% - 8px);
-        min-height: 40px;
         border-radius: 8px;
-        padding: 6px 10px;
+        padding: 8px 12px;
         cursor: pointer;
         transition: all 0.2s ease;
         display: flex;
         flex-direction: column;
         justify-content: center;
         overflow: hidden;
-        z-index: 5;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        min-height: 44px;
     }
 
     .task-block:hover {
-        transform: translateY(-2px);
+        transform: translateX(4px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        z-index: 20;
     }
 
     .task-block.priority-critical { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; }
@@ -363,17 +382,27 @@
 
     /* Empty state message in row */
     .empty-row-message {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
         color: #ef4444;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 500;
         white-space: nowrap;
         display: flex;
         align-items: center;
         gap: 6px;
+        padding: 12px 16px;
+        background: rgba(239, 68, 68, 0.08);
+        border-radius: 8px;
+        width: fit-content;
+    }
+
+    .empty-cell {
+        background: rgba(239, 68, 68, 0.03);
+    }
+
+    .empty-cell-indicator {
+        color: #ccc;
+        text-align: center;
+        font-size: 14px;
     }
 
     /* Loading State */
@@ -786,32 +815,31 @@ class ResourceTimeline {
         const slots = data.time_slots;
         const users = data.users;
 
-        let html = '';
+        let html = '<table class="timeline-table"><thead><tr>';
 
         // Header Row
-        html += '<div class="timeline-row timeline-header-row">';
-        html += '<div class="timeline-cell timeline-header-cell timeline-user-cell">Team Members</div>';
+        html += '<th class="timeline-header-cell timeline-user-cell">Team Members</th>';
 
         slots.forEach(slot => {
             const isToday = slot.is_today ? 'today' : '';
             if (this.viewType === 'weekly') {
-                html += `<div class="timeline-cell timeline-header-cell ${isToday}">
+                html += `<th class="timeline-header-cell ${isToday}">
                     <span class="day-number">${slot.day}</span>
                     ${slot.label}
-                </div>`;
+                </th>`;
             } else {
-                html += `<div class="timeline-cell timeline-header-cell">${slot.label}</div>`;
+                html += `<th class="timeline-header-cell">${slot.label}</th>`;
             }
         });
-        html += '</div>';
+        html += '</tr></thead><tbody>';
 
         // User Rows
         users.forEach(user => {
             const noTaskClass = user.has_tasks ? '' : 'no-tasks';
-            html += `<div class="timeline-row ${noTaskClass}">`;
+            html += `<tr class="timeline-row ${noTaskClass}">`;
 
             // User Cell
-            html += `<div class="timeline-cell timeline-user-cell">
+            html += `<td class="timeline-user-cell">
                 <div class="user-info">
                     <img src="${user.avatar}" alt="${user.name}" class="user-avatar" onerror="this.src='{{ asset('assets/images/user/avatar-1.jpg') }}'">
                     <div class="user-details">
@@ -819,37 +847,65 @@ class ResourceTimeline {
                         <div class="user-stats">${user.total_actual_hrs}h / ${user.total_estimated_hrs}h</div>
                     </div>
                 </div>
-            </div>`;
+            </td>`;
 
-            // Tasks Cell (spans all time columns)
-            html += `<div class="timeline-cell timeline-tasks-cell" colspan="${slots.length}" style="position: relative;">`;
-            html += `<div class="tasks-row" style="width: ${slots.length * this.slotWidth}px;">`;
+            if (this.viewType === 'weekly') {
+                // Weekly view - one cell per day with tasks for that day
+                slots.forEach((slot, slotIndex) => {
+                    const slotDate = slot.date;
+                    const tasksInSlot = user.tasks.filter(task => {
+                        return slotIndex >= task.start_slot && slotIndex < (task.start_slot + task.span);
+                    });
 
-            if (!user.has_tasks) {
-                html += `<div class="empty-row-message"><i class="ti ti-calendar-off"></i> No tasks scheduled</div>`;
-            } else {
-                user.tasks.forEach(task => {
-                    const left = task.start_slot * this.slotWidth;
-                    const width = Math.max(task.span * this.slotWidth - 4, 60);
-                    const completedClass = task.is_complete ? 'completed' : '';
+                    html += `<td class="timeline-tasks-cell ${slot.is_today ? 'today-cell' : ''} ${!user.has_tasks ? 'empty-cell' : ''}">`;
+                    html += '<div class="tasks-container">';
 
-                    html += `<div class="task-block priority-${task.priority} ${completedClass}"
-                        style="left: ${left}px; width: ${width}px;"
-                        data-task='${JSON.stringify(task).replace(/'/g, "&#39;")}'
-                        onclick="timeline.showTaskDetails(this)">
-                        <div class="task-name">${task.name}</div>
-                        <div class="task-meta">${task.project_name} | ${task.actual_hrs}h/${task.estimated_hrs}h</div>
-                        <div class="task-progress">
-                            <div class="task-progress-bar" style="width: ${task.progress}%"></div>
-                        </div>
-                    </div>`;
+                    if (tasksInSlot.length > 0) {
+                        tasksInSlot.forEach(task => {
+                            const completedClass = task.is_complete ? 'completed' : '';
+                            html += `<div class="task-block priority-${task.priority} ${completedClass}"
+                                data-task='${JSON.stringify(task).replace(/'/g, "&#39;")}'
+                                onclick="timeline.showTaskDetails(this)">
+                                <div class="task-name">${task.name}</div>
+                                <div class="task-meta">${task.actual_hrs}h/${task.estimated_hrs}h</div>
+                            </div>`;
+                        });
+                    } else if (!user.has_tasks && slotIndex === 3) {
+                        // Show message in middle cell for users with no tasks
+                        html += `<div class="empty-cell-indicator">-</div>`;
+                    }
+
+                    html += '</div></td>';
                 });
+            } else {
+                // Daily view - show all tasks in a single merged cell
+                html += `<td class="timeline-tasks-cell" colspan="${slots.length}">`;
+                html += '<div class="tasks-container tasks-horizontal">';
+
+                if (!user.has_tasks) {
+                    html += `<div class="empty-row-message"><i class="ti ti-calendar-off"></i> No tasks scheduled for this day</div>`;
+                } else {
+                    user.tasks.forEach(task => {
+                        const completedClass = task.is_complete ? 'completed' : '';
+                        html += `<div class="task-block priority-${task.priority} ${completedClass}"
+                            data-task='${JSON.stringify(task).replace(/'/g, "&#39;")}'
+                            onclick="timeline.showTaskDetails(this)">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-meta">${task.project_name} | ${task.actual_hrs}h/${task.estimated_hrs}h | Est: ${task.estimated_hrs}h</div>
+                            <div class="task-progress">
+                                <div class="task-progress-bar" style="width: ${task.progress}%"></div>
+                            </div>
+                        </div>`;
+                    });
+                }
+
+                html += '</div></td>';
             }
 
-            html += '</div></div>';
-            html += '</div>';
+            html += '</tr>';
         });
 
+        html += '</tbody></table>';
         grid.innerHTML = html;
     }
 
