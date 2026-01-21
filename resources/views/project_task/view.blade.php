@@ -709,7 +709,10 @@
                 <span class="task-issue-key">{{ $task->issue_key }}</span>
             @endif
             @if($task->issueType)
-                <span class="task-issue-type-badge" style="background: {{ $task->issueType->color ?? '#5e6c84' }};">
+                @php
+                    $issueColor = !empty($task->issueType->color) ? $task->issueType->color : '#5e6c84';
+                @endphp
+                <span class="task-issue-type-badge" style="background: {{ $issueColor }};">
                     <i class="{{ $task->issueType->icon ?? 'ti ti-subtask' }}"></i>
                     {{ $task->issueType->name }}
                 </span>

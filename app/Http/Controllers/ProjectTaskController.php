@@ -143,7 +143,14 @@ class ProjectTaskController extends Controller
             $post               = $request->all();
             $post['project_id'] = $project->id;
             $post['stage_id']   = $request->stage_id;
-            $post['assign_to'] = $request->assign_to;
+
+            // Default assign_to: if no user selected, assign to creator
+            if (empty($request->assign_to)) {
+                $post['assign_to'] = (string) $usr->id;
+            } else {
+                $post['assign_to'] = $request->assign_to;
+            }
+
             $post['created_by'] = \Auth::user()->creatorId();
             $post['start_date']=date("Y-m-d H:i:s", strtotime($request->start_date));
             $post['end_date'] = isset($request->end_date) ? date("Y-m-d H:i:s", strtotime($request->end_date)) : null;
@@ -1447,5 +1454,54 @@ class ProjectTaskController extends Controller
         {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
+    }
+
+    /**
+     * Epics & Stories Management View
+     * Shows all Epics and Stories for a project with edit/delete options
+     */
+    public function containers($project_id)
+    {
+        if(!\Auth::user()->can('manage project task'))
+        {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $project = Project::where('id', $project_id)->where('created_by', \Auth::user()->creatorId())->first();
+
+        if($project == null) {
+            return redirect()->route('projects.index')->with('error', __('Project not found'));
+        }
+
+        // Get Epic issue type
+        $epicType = \App\Models\IssueType::where('name', 'Epic')->where('is_container', true)->first();
+
+        // Get Story issue type
+        $storyType = \App\Models\IssueType::where('name', 'Story')->where('is_container', true)->first();
+
+        // Get all Epics for this project
+        $epics = collect();
+        if ($epicType) {
+            $epics = ProjectTask::where('project_id', $project_id)
+                ->where('issue_type_id', $epicType->id)
+                ->with(['stage', 'milestone'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        // Get all Stories for this project
+        $stories = collect();
+        if ($storyType) {
+            $stories = ProjectTask::where('project_id', $project_id)
+                ->where('issue_type_id', $storyType->id)
+                ->with(['stage', 'milestone', 'parent'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        // Get stages for dropdown
+        $stages = TaskStage::orderBy('order')->where('created_by', \Auth::user()->creatorId())->get();
+
+        return view('project_task.containers', compact('project', 'epics', 'stories', 'stages', 'epicType', 'storyType'));
     }
 }

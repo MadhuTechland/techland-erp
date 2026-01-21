@@ -1364,6 +1364,9 @@
 @endsection
 @section('action-btn')
     <div class="d-flex gap-2">
+        <a href="{{ route('projects.tasks.containers', $project->id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="{{ __('Manage Epics & Stories') }}">
+            <i class="ti ti-bolt"></i> {{ __('Epics & Stories') }}
+        </a>
         <a href="{{ route('projects.tasks.backlog', $project->id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="{{ __('Backlog View') }}">
             <i class="ti ti-list-tree"></i> {{ __('Backlog') }}
         </a>
@@ -1410,7 +1413,7 @@
                 <select class="form-select" id="filter_milestone">
                     <option value="">{{__('All Milestones')}}</option>
                     @foreach($milestones as $milestone)
-                        <option value="{{ $milestone->id }}">{{ $milestone->name }}</option>
+                        <option value="{{ $milestone->id }}">{{ $milestone->title }}</option>
                     @endforeach
                 </select>
             </div>

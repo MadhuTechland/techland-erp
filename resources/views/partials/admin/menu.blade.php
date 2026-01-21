@@ -1174,6 +1174,13 @@
                                     @endif
                                     @if (\Auth::user()->type == 'company')
                                         <li
+                                            class="dash-item  {{ Request::segment(1) == 'employee-screenshots' ? 'active open' : '' }}">
+                                            <a class="dash-link"
+                                                href="{{ route('employee.screenshots') }}">{{ __('Employee Screenshots') }}</a>
+                                        </li>
+                                    @endif
+                                    @if (\Auth::user()->type == 'company')
+                                        <li
                                             class="dash-item  {{ Request::route()->getName() == 'project_report.index' || Request::route()->getName() == 'project_report.show' ? 'active' : '' }}">
                                             <a class="dash-link"
                                                 href="{{ route('project_report.index') }}">{{ __('Project Report') }}</a>

@@ -565,6 +565,54 @@
             50% { opacity: 0.9; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0); }
         }
 
+        /* Card Option Menu */
+        .btn-group.card-option {
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .task-card:hover .btn-group.card-option {
+            opacity: 1;
+        }
+
+        .btn-group.card-option button {
+            padding: 4px 6px;
+            font-size: 16px;
+            color: #94a3b8;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+
+        .btn-group.card-option button:hover {
+            color: #475569;
+            background: #e2e8f0;
+        }
+
+        /* Dropdown menu */
+        .dropdown-menu {
+            font-size: 13px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+        }
+
+        .dropdown-item {
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+
+        .dropdown-item:hover {
+            background: #f1f5f9;
+        }
+
+        .dropdown-item i {
+            font-size: 15px;
+            margin-right: 8px;
+        }
+
         /* Responsive Adjustments */
         @media (max-width: 768px) {
             .kanban-column {
@@ -748,15 +796,47 @@
                         ?>
                         <div class="task-card" data-task-id="{{ $task->id }}" data-project-id="{{ $task->project_id }}" data-user-id="{{ $task->assign_to }}" data-priority="{{ $task->priority }}" data-epic-id="{{ $taskEpicId }}" data-story-id="{{ $taskStoryId }}" data-issue-type="{{ $task->issue_type_id }}" data-end-date="{{ $task->end_date && $task->end_date != '0000-00-00' ? \Carbon\Carbon::parse($task->end_date)->format('Y-m-d') : '' }}">
                             <div class="task-card-body">
-                                <div class="task-card-meta">
-                                    @if($task->issue_key)
-                                        <span class="issue-key">{{ $task->issue_key }}</span>
-                                    @endif
-                                    @if($task->project)
-                                        <span class="task-badge project" title="{{ $task->project->project_name }}">
-                                            <i class="ti ti-folder"></i> {{ Str::limit($task->project->project_name, 15) }}
-                                        </span>
-                                    @endif
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="task-card-meta">
+                                        @if($task->issue_key)
+                                            <span class="issue-key">{{ $task->issue_key }}</span>
+                                        @endif
+                                        @if($task->project)
+                                            <span class="task-badge project" title="{{ $task->project->project_name }}">
+                                                <i class="ti ti-folder"></i> {{ Str::limit($task->project->project_name, 15) }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="btn-group card-option">
+                                        <button type="button" class="btn p-0 border-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="ti ti-dots-vertical"></i>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-end">
+                                            @can('view project task')
+                                                <a href="#!" data-size="lg"
+                                                    data-url="{{ route('projects.tasks.show', [$task->project_id, $task->id]) }}"
+                                                    data-ajax-popup="true" class="dropdown-item"
+                                                    data-bs-original-title="{{ __('View') }}">
+                                                    <i class="ti ti-eye"></i>{{ __('View') }}
+                                                </a>
+                                            @endcan
+                                            @can('edit project task')
+                                                <a href="#!" data-size="lg"
+                                                    data-url="{{ route('projects.tasks.edit', [$task->project_id, $task->id]) }}"
+                                                    data-ajax-popup="true" class="dropdown-item"
+                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                    <i class="ti ti-pencil"></i>{{ __('Edit') }}
+                                                </a>
+                                            @endcan
+                                            @can('delete project task')
+                                                {!! Form::open(['method' => 'DELETE', 'route' => ['projects.tasks.destroy', [$task->project_id, $task->id]], 'class' => 'd-inline']) !!}
+                                                <a href="#!" class="dropdown-item bs-pass-para">
+                                                    <i class="ti ti-trash"></i>{{ __('Delete') }}
+                                                </a>
+                                                {!! Form::close() !!}
+                                            @endcan
+                                        </div>
+                                    </div>
                                 </div>
                                 <h6 class="task-card-title">
                                     <a href="#" data-url="{{ route('projects.tasks.show', [$task->project_id, $task->id]) }}" data-ajax-popup="true" data-size="lg" data-bs-original-title="{{ $task->name }}">
@@ -975,7 +1055,7 @@
             // Update stage counts
             function updateStageCounts() {
                 $('.kanban-column').each(function() {
-                    var count = $(this).find('.task-card').length;
+                    var count = $(this).find('.task-card:visible').length;
                     $(this).find('.task-count').text(count);
                 });
             }
@@ -1152,6 +1232,32 @@
 
             // Apply default filter (My Tasks) on page load
             filterTasks();
+
+            // Delete confirmation handler
+            $(document).on('click', '.bs-pass-para', function(e) {
+                e.preventDefault();
+                var form = $(this).closest('form');
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-danger'
+                    },
+                    buttonsStyling: false
+                });
+                swalWithBootstrapButtons.fire({
+                    title: '{{ __("Are you sure?") }}',
+                    text: '{{ __("This action cannot be undone.") }}',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '{{ __("Yes, delete it!") }}',
+                    cancelButtonText: '{{ __("Cancel") }}',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
         });
     </script>
 @endpush

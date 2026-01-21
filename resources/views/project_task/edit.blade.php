@@ -36,7 +36,7 @@
         <div class="col-6" id="parent_task_container" style="{{ $task->issueType && $task->issueType->name != 'Epic' ? '' : 'display: none;' }}">
             <div class="form-group">
                 {{ Form::label('parent_id', __('Parent Epic/Story'),['class' => 'form-label']) }}
-                <select class="form-control select" name="parent_id" id="parent_id">
+                <select class="form-control searchable-select" name="parent_id" id="parent_id">
                     <option value="">{{__('None (Top Level)')}}</option>
                     @foreach($parent_tasks as $parent)
                         <option value="{{ $parent->id }}" {{ ($task->parent_id == $parent->id) ? 'selected' : '' }} data-type="{{ $parent->issue_type_id }}">
@@ -55,7 +55,7 @@
         <div class="col-6">
             <div class="form-group">
                 {{ Form::label('milestone_id', __('Milestone'),['class' => 'form-label']) }}
-                <select class="form-control select2" name="milestone_id" id="milestone_id">
+                <select class="form-control searchable-select" name="milestone_id" id="milestone_id">
                     <option value="0" class="text-muted">{{__('Choose Milestone')}}</option>
                     @foreach($project->milestones as $m_val)
                         <option value="{{ $m_val->id }}" {{ ($task->milestone_id == $m_val->id) ? 'selected':'' }}>{{ $m_val->title }}</option>
@@ -113,41 +113,117 @@
     </div>
     <div class="form-group">
         <label class="form-label">{{__('Task members')}}</label>
-        <small class="form-text text-muted mb-2 mt-0">{{__('Below users are assigned in your project.')}}</small>
+        <small class="form-text text-muted mb-2 mt-0">{{__('Click to select team members for this task')}}</small>
     </div>
-    <div class="list-group list-group-flush mb-4">
-        <div class="row">
-            @foreach($project->users as $user)
-                <div class="col-6">
-                    <div class="list-group-item px-0">
-                        <div class="row align-items-center">
-                            <div class="col-auto">
-                                <a href="#" class="avatar avatar-sm rounded-circle">
-                                    <img class="wid-40 rounded-circle ml-3" data-original-title="{{(!empty($user)?$user->name:'')}}" @if($user->avatar) src="{{asset('/storage/uploads/avatar/'.$user->avatar)}}" @else src="{{asset('/storage/uploads/avatar/avatar.png')}}" @endif />
-                                </a>
-                            </div>
-                            <div class="col">
-                                <p class="d-block h6 text-sm mb-0">{{ $user->name }}</p>
-                                <p class="card-text text-sm text-muted mb-0">{{ $user->email }}</p>
-                            </div>
-                            @php
-                                $usrs = explode(',',$task->assign_to);
-                            @endphp
-                            <div class="col-auto text-end add_usr {{ (in_array($user->id,$usrs)) ? 'selected':'' }}" data-id="{{ $user->id }}">
-                                <button type="button" class="btn mr-3">
-                            <span class="btn-inner--visible">
-                              <i class="ti ti-{{ (in_array($user->id,$usrs)) ? 'check' : 'plus' }} " id="usr_icon_{{$user->id}}"></i>
-                            </span>
-                                    <span class="btn-inner--hidden text-white" id="usr_txt_{{$user->id}}">{{ (in_array($user->id,$usrs)) ? __('Added') : __('Add')}}</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+    <style>
+        .member-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .member-card {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fff;
+            position: relative;
+        }
+        .member-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        .member-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f3ff 0%, #e8ecff 100%);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        .member-card.selected::after {
+            content: '\eb28';
+            font-family: 'tabler-icons';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .member-card .member-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e9ecef;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .member-card.selected .member-avatar {
+            border-color: #667eea;
+        }
+        .member-card .member-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .member-card .member-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #2d3748;
+            margin: 0 0 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .member-card .member-email {
+            font-size: 12px;
+            color: #718096;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .no-members-msg {
+            text-align: center;
+            padding: 30px;
+            color: #718096;
+            font-style: italic;
+        }
+    </style>
+    @php
+        $assignedUsers = $task->assign_to ? explode(',', $task->assign_to) : [];
+        $uniqueUsers = $project->users->unique('id');
+    @endphp
+    <div class="member-selection-grid">
+        @forelse($uniqueUsers as $user)
+            <div class="member-card {{ in_array($user->id, $assignedUsers) ? 'selected' : '' }}" data-user-id="{{ $user->id }}">
+                <img class="member-avatar"
+                     src="{{ $user->avatar ? asset('/storage/uploads/avatar/'.$user->avatar) : asset('/storage/uploads/avatar/avatar.png') }}"
+                     alt="{{ $user->name }}">
+                <div class="member-info">
+                    <p class="member-name" title="{{ $user->name }}">{{ $user->name }}</p>
+                    <p class="member-email" title="{{ $user->email }}">{{ $user->email }}</p>
                 </div>
-            @endforeach
-        </div>
-        {{ Form::hidden('assign_to', null) }}
+            </div>
+        @empty
+            <div class="no-members-msg col-12">
+                <i class="ti ti-users-minus" style="font-size: 32px; opacity: 0.5;"></i>
+                <p class="mt-2 mb-0">{{__('No team members assigned to this project yet.')}}</p>
+            </div>
+        @endforelse
     </div>
+    {{ Form::hidden('assign_to', $task->assign_to, ['id' => 'assign_to_input']) }}
 </div>
 <div class="modal-footer">
     <input type="button" value="{{__('Cancel')}}" class="btn  btn-secondary" data-bs-dismiss="modal">
@@ -157,6 +233,42 @@
 
 <script>
 $(document).ready(function() {
+    // Initialize Select2 for searchable dropdowns
+    if ($.fn.select2) {
+        $('.searchable-select').select2({
+            dropdownParent: $('.modal-body'),
+            placeholder: '{{ __("Search...") }}',
+            allowClear: true,
+            width: '100%'
+        });
+    }
+
+    // Member selection handling - initialize with existing selections
+    var existingAssignTo = $('#assign_to_input').val();
+    var selectedMembers = existingAssignTo ? existingAssignTo.split(',').filter(Boolean) : [];
+
+    function updateAssignToInput() {
+        $('#assign_to_input').val(selectedMembers.join(','));
+    }
+
+    // Click handler for member cards
+    $(document).on('click', '.member-card', function() {
+        var userId = $(this).data('user-id').toString();
+        var index = selectedMembers.indexOf(userId);
+
+        if (index > -1) {
+            // Already selected - remove
+            selectedMembers.splice(index, 1);
+            $(this).removeClass('selected');
+        } else {
+            // Not selected - add
+            selectedMembers.push(userId);
+            $(this).addClass('selected');
+        }
+
+        updateAssignToInput();
+    });
+
     // Show/hide parent selector based on issue type
     $('#issue_type_id').on('change', function() {
         var selectedOption = $(this).find('option:selected');

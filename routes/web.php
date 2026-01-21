@@ -1050,6 +1050,7 @@ Route::post('/projects/{id}/change/{tid}/complete', [ProjectTaskController::clas
 Route::post('/projects/{id}/change/{tid}/progress', [ProjectTaskController::class, 'changeProg'])->name('change.progress');
 Route::get('/projects/task/{id}/get', [ProjectTaskController::class, 'taskGet'])->name('projects.tasks.get')->middleware(['auth', 'XSS']);
 Route::get('/projects/{id}/backlog', [ProjectTaskController::class, 'backlog'])->name('projects.tasks.backlog')->middleware(['auth', 'XSS']);
+Route::get('/projects/{id}/epics-stories', [ProjectTaskController::class, 'containers'])->name('projects.tasks.containers')->middleware(['auth', 'XSS']);
 Route::get('/calendar/{id}/show', [ProjectTaskController::class, 'calendarShow'])->name('task.calendar.show')->middleware(['auth', 'XSS']);
 Route::post('/calendar/{id}/drag', [ProjectTaskController::class, 'calendarDrag'])->name('task.calendar.drag');
 Route::get('calendar/{task}/{pid?}', [ProjectTaskController::class, 'calendarView'])->name('task.calendar')->middleware(['auth', 'XSS']);
@@ -1430,6 +1431,8 @@ Route::get('time-tracker', [TimeTrackerController::class, 'index'])->name('time.
 Route::delete('tracker/{tid}/destroy', [TimeTrackerController::class, 'Destroy'])->name('tracker.destroy');
 Route::post('tracker/image-view', [TimeTrackerController::class, 'getTrackerImages'])->name('tracker.image.view');
 Route::delete('tracker/image-remove', [TimeTrackerController::class, 'removeTrackerImages'])->name('tracker.image.remove');
+Route::get('employee-screenshots', [TimeTrackerController::class, 'employeeScreenshots'])->name('employee.screenshots')->middleware(['auth', 'XSS']);
+Route::post('employee-screenshots/user', [TimeTrackerController::class, 'getUserScreenshots'])->name('employee.screenshots.user')->middleware(['auth', 'XSS']);
 Route::get('projects/time-tracker/{id}', [ProjectController::class, 'tracker'])->name('projecttime.tracker')->middleware(['auth', 'XSS']);
 
 //=================================== Zoom Meeting ======================================================================
