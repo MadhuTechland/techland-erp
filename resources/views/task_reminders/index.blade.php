@@ -170,7 +170,7 @@
 
                     <div class="form-group mb-3">
                         <label class="form-label">{{ __('Exclude Departments') }}</label>
-                        <select name="excluded_departments[]" class="form-control select2" multiple>
+                        <select name="excluded_departments[]" id="excluded_departments" class="form-control select2" multiple>
                             @foreach($departments as $dept)
                                 <option value="{{ $dept->id }}"
                                     {{ $recipients->where('type', 'department')->where('type_id', $dept->id)->where('should_receive', false)->count() > 0 ? 'selected' : '' }}>
@@ -183,7 +183,7 @@
 
                     <div class="form-group mb-3">
                         <label class="form-label">{{ __('Exclude Designations') }}</label>
-                        <select name="excluded_designations[]" class="form-control select2" multiple>
+                        <select name="excluded_designations[]" id="excluded_designations" class="form-control select2" multiple>
                             @foreach($designations as $desig)
                                 <option value="{{ $desig->id }}"
                                     {{ $recipients->where('type', 'designation')->where('type_id', $desig->id)->where('should_receive', false)->count() > 0 ? 'selected' : '' }}>
@@ -196,7 +196,7 @@
 
                     <div class="form-group mb-3">
                         <label class="form-label">{{ __('Exclude User Types') }}</label>
-                        <select name="excluded_user_types[]" class="form-control select2" multiple>
+                        <select name="excluded_user_types[]" id="excluded_user_types" class="form-control select2" multiple>
                             @foreach($userTypes as $type)
                                 <option value="{{ $type }}"
                                     {{ $recipients->where('type', 'user_type')->where('type_name', $type)->where('should_receive', false)->count() > 0 ? 'selected' : '' }}>
@@ -436,14 +436,6 @@
 @push('script-page')
 <script>
 $(document).ready(function() {
-    // Initialize Select2
-    if ($.fn.select2) {
-        $('.select2').select2({
-            placeholder: '{{ __("Select...") }}',
-            allowClear: true
-        });
-    }
-
     // Copy variable to clipboard
     window.copyVariable = function(variable) {
         navigator.clipboard.writeText(variable);

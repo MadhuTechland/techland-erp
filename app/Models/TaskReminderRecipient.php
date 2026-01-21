@@ -107,12 +107,18 @@ class TaskReminderRecipient extends Model
         // Get users and filter by department/designation via Employee
         $users = $query->get();
 
-        // Further filter by department and designation
+        // Further filter by department and designation (only if exclusions are configured)
         $eligibleUsers = $users->filter(function ($user) use ($excludedDepartments, $excludedDesignations) {
+            // If no department or designation exclusions, include all users
+            if (empty($excludedDepartments) && empty($excludedDesignations)) {
+                return true;
+            }
+
             $employee = Employee::where('user_id', $user->id)->first();
 
+            // If no employee record, include the user (they can't be excluded by dept/designation)
             if (!$employee) {
-                return false; // No employee record, exclude
+                return true;
             }
 
             // Check department exclusion
