@@ -1842,3 +1842,25 @@ Route::middleware(['auth', 'XSS'])->prefix('brd-parser')->group(function () {
     Route::get('/skills/suggestions', [\App\Http\Controllers\BrdParserController::class, 'getSkillSuggestions'])
         ->name('brd.skills.suggestions');
 });
+
+// Task Reminder Settings Routes
+Route::middleware(['auth', 'XSS'])->prefix('task-reminders')->group(function () {
+    Route::get('/', [\App\Http\Controllers\TaskReminderController::class, 'index'])
+        ->name('task-reminders.index');
+    Route::post('/recipients', [\App\Http\Controllers\TaskReminderController::class, 'saveRecipients'])
+        ->name('task-reminders.save-recipients');
+    Route::post('/schedule', [\App\Http\Controllers\TaskReminderController::class, 'saveSchedule'])
+        ->name('task-reminders.save-schedule');
+    Route::get('/template/{id}/edit', [\App\Http\Controllers\TaskReminderController::class, 'editTemplate'])
+        ->name('task-reminders.edit-template');
+    Route::post('/template/{id}', [\App\Http\Controllers\TaskReminderController::class, 'updateTemplate'])
+        ->name('task-reminders.update-template');
+    Route::post('/preview-template', [\App\Http\Controllers\TaskReminderController::class, 'previewTemplate'])
+        ->name('task-reminders.preview-template');
+    Route::post('/send-test', [\App\Http\Controllers\TaskReminderController::class, 'sendTestReminder'])
+        ->name('task-reminders.send-test');
+    Route::get('/eligible-users', [\App\Http\Controllers\TaskReminderController::class, 'getEligibleUsers'])
+        ->name('task-reminders.eligible-users');
+    Route::get('/logs', [\App\Http\Controllers\TaskReminderController::class, 'logs'])
+        ->name('task-reminders.logs');
+});

@@ -1515,6 +1515,16 @@
 
                     @if (Gate::check('manage company settings'))
                         <li
+                            class="dash-item dash-hasmenu {{ Request::segment(1) == 'task-reminders' ? ' active' : '' }}">
+                            <a href="{{ route('task-reminders.index') }}" class="dash-link">
+                                <span class="dash-micon"><i class="ti ti-bell-ringing"></i></span><span
+                                    class="dash-mtext">{{ __('Task Reminders') }}</span>
+                            </a>
+                        </li>
+                    @endif
+
+                    @if (Gate::check('manage company settings'))
+                        <li
                             class="dash-item dash-hasmenu {{ Request::segment(1) == 'settings' ? ' active' : '' }}">
                             <a href="{{ route('settings') }}" class="dash-link">
                                 <span class="dash-micon"><i class="ti ti-settings"></i></span><span

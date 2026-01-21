@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class TaskReminderRecipient extends Model
+{
+    protected $fillable = [
+        'type',
+        'type_id',
+        'type_name',
+        'should_receive',
+        'created_by',
+    ];
+
+    protected $casts = [
+        'should_receive' => 'boolean',
+    ];
+
+    // Type constants
+    const TYPE_DEPARTMENT = 'department';
+    const TYPE_DESIGNATION = 'designation';
+    const TYPE_USER_TYPE = 'user_type';
+
+    /**
+     * Get the department if type is department
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'type_id');
+    }
+
+    /**
+     * Get the designation if type is designation
+     */
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class, 'type_id');
+    }
+
+    /**
+     * Scope for a specific creator
+     */
+    public function scopeForCreator($query, $creatorId)
+    {
+        return $query->where('created_by', $creatorId);
+    }
+
+    /**
+     * Scope for recipients that should receive reminders
+     */
+    public function scopeShouldReceive($query)
+    {
+        return $query->where('should_receive', true);
+    }
+
+    /**
+     * Scope for recipients that should NOT receive reminders
+     */
+    public function scopeExcluded($query)
+    {
+        return $query->where('should_receive', false);
+    }
+
+    /**
+     * Get all users who should receive task reminders
+     */
+    public static function getEligibleUsers($creatorId)
+    {
+        // Get excluded departments
+        $excludedDepartments = self::forCreator($creatorId)
+            ->where('type', self::TYPE_DEPARTMENT)
+            ->excluded()
+            ->pluck('type_id')
+            ->toArray();
+
+        // Get excluded designations
+        $excludedDesignations = self::forCreator($creatorId)
+            ->where('type', self::TYPE_DESIGNATION)
+            ->excluded()
+            ->pluck('type_id')
+            ->toArray();
+
+        // Get excluded user types
+        $excludedUserTypes = self::forCreator($creatorId)
+            ->where('type', self::TYPE_USER_TYPE)
+            ->excluded()
+            ->pluck('type_name')
+            ->toArray();
+
+        // Default excluded types if nothing configured
+        if (empty($excludedUserTypes) && empty($excludedDepartments) && empty($excludedDesignations)) {
+            $excludedUserTypes = ['company', 'super admin', 'client'];
+        }
+
+        // Get eligible users
+        $query = User::where('created_by', $creatorId)
+            ->where('delete_status', 0)
+            ->where('is_enable_login', 1);
+
+        // Exclude user types
+        if (!empty($excludedUserTypes)) {
+            $query->whereNotIn('type', $excludedUserTypes);
+        }
+
+        // Get users and filter by department/designation via Employee
+        $users = $query->get();
+
+        // Further filter by department and designation
+        $eligibleUsers = $users->filter(function ($user) use ($excludedDepartments, $excludedDesignations) {
+            $employee = Employee::where('user_id', $user->id)->first();
+
+            if (!$employee) {
+                return false; // No employee record, exclude
+            }
+
+            // Check department exclusion
+            if (!empty($excludedDepartments) && in_array($employee->department_id, $excludedDepartments)) {
+                return false;
+            }
+
+            // Check designation exclusion
+            if (!empty($excludedDesignations) && in_array($employee->designation_id, $excludedDesignations)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        return $eligibleUsers;
+    }
+
+    /**
+     * Get display name for the recipient configuration
+     */
+    public function getDisplayNameAttribute()
+    {
+        switch ($this->type) {
+            case self::TYPE_DEPARTMENT:
+                return $this->department ? $this->department->name : 'Unknown Department';
+            case self::TYPE_DESIGNATION:
+                return $this->designation ? $this->designation->name : 'Unknown Designation';
+            case self::TYPE_USER_TYPE:
+                return ucfirst($this->type_name);
+            default:
+                return 'Unknown';
+        }
+    }
+}

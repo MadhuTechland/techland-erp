@@ -15,7 +15,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Task reminders - run every minute to check if any schedules need to fire
+        // The command internally checks the configured schedule times
+        $schedule->command('reminders:send-task-reminders')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**
