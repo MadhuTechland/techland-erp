@@ -89,17 +89,13 @@ class TaskReminderRecipient extends Model
             ->pluck('type_name')
             ->toArray();
 
-        // Default excluded types if nothing configured
-        if (empty($excludedUserTypes) && empty($excludedDepartments) && empty($excludedDesignations)) {
-            $excludedUserTypes = ['company', 'super admin', 'client'];
-        }
-
-        // Get eligible users
+        // Get eligible users - use same pattern as rest of the codebase
         $query = User::where('created_by', $creatorId)
-            ->where('delete_status', 0)
-            ->where('is_enable_login', 1);
+            ->where('type', '!=', 'client')
+            ->where('type', '!=', 'company')
+            ->where('type', '!=', 'super admin');
 
-        // Exclude user types
+        // Apply additional user type exclusions if configured
         if (!empty($excludedUserTypes)) {
             $query->whereNotIn('type', $excludedUserTypes);
         }
