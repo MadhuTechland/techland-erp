@@ -207,6 +207,19 @@
                         <small class="text-muted">{{ __('e.g., Company (Admin), Client') }}</small>
                     </div>
 
+                    <div class="form-group mb-3">
+                        <label class="form-label">{{ __('Exclude Specific Users') }}</label>
+                        <select name="excluded_users[]" id="excluded_users" class="form-control select2" multiple>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}"
+                                    {{ $recipients->where('type', 'user')->where('type_id', $user->id)->where('should_receive', false)->count() > 0 ? 'selected' : '' }}>
+                                    {{ $user->name }} ({{ $user->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">{{ __('Select individual users to exclude from reminders') }}</small>
+                    </div>
+
                     <button type="submit" class="btn btn-primary">
                         <i class="ti ti-device-floppy"></i> {{ __('Save Recipient Settings') }}
                     </button>

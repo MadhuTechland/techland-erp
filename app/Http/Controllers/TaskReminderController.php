@@ -41,6 +41,14 @@ class TaskReminderController extends Controller
         $departments = Department::where('created_by', $creatorId)->get();
         $designations = Designation::where('created_by', $creatorId)->get();
 
+        // Get all users for exclusion selection
+        $users = User::where('created_by', $creatorId)
+            ->where('type', '!=', 'client')
+            ->where('type', '!=', 'company')
+            ->where('type', '!=', 'super admin')
+            ->orderBy('name')
+            ->get();
+
         // Get user types
         $userTypes = ['employee', 'company', 'client'];
 
@@ -60,6 +68,7 @@ class TaskReminderController extends Controller
             'schedules',
             'departments',
             'designations',
+            'users',
             'userTypes',
             'recentLogs',
             'statistics'
@@ -110,6 +119,18 @@ class TaskReminderController extends Controller
                 TaskReminderRecipient::create([
                     'type' => TaskReminderRecipient::TYPE_USER_TYPE,
                     'type_name' => $userType,
+                    'should_receive' => false,
+                    'created_by' => $creatorId,
+                ]);
+            }
+        }
+
+        // Save excluded individual users
+        if ($request->has('excluded_users')) {
+            foreach ($request->excluded_users as $userId) {
+                TaskReminderRecipient::create([
+                    'type' => TaskReminderRecipient::TYPE_USER,
+                    'type_id' => $userId,
                     'should_receive' => false,
                     'created_by' => $creatorId,
                 ]);

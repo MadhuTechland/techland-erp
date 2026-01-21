@@ -22,6 +22,7 @@ class TaskReminderRecipient extends Model
     const TYPE_DEPARTMENT = 'department';
     const TYPE_DESIGNATION = 'designation';
     const TYPE_USER_TYPE = 'user_type';
+    const TYPE_USER = 'user';
 
     /**
      * Get the department if type is department
@@ -89,6 +90,13 @@ class TaskReminderRecipient extends Model
             ->pluck('type_name')
             ->toArray();
 
+        // Get excluded individual users
+        $excludedUsers = self::forCreator($creatorId)
+            ->where('type', self::TYPE_USER)
+            ->excluded()
+            ->pluck('type_id')
+            ->toArray();
+
         // Get eligible users - use same pattern as rest of the codebase
         $query = User::where('created_by', $creatorId)
             ->where('type', '!=', 'client')
@@ -98,6 +106,11 @@ class TaskReminderRecipient extends Model
         // Apply additional user type exclusions if configured
         if (!empty($excludedUserTypes)) {
             $query->whereNotIn('type', $excludedUserTypes);
+        }
+
+        // Exclude specific users
+        if (!empty($excludedUsers)) {
+            $query->whereNotIn('id', $excludedUsers);
         }
 
         // Get users and filter by department/designation via Employee
@@ -134,6 +147,14 @@ class TaskReminderRecipient extends Model
     }
 
     /**
+     * Get the user if type is user
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'type_id');
+    }
+
+    /**
      * Get display name for the recipient configuration
      */
     public function getDisplayNameAttribute()
@@ -145,6 +166,8 @@ class TaskReminderRecipient extends Model
                 return $this->designation ? $this->designation->name : 'Unknown Designation';
             case self::TYPE_USER_TYPE:
                 return ucfirst($this->type_name);
+            case self::TYPE_USER:
+                return $this->user ? $this->user->name : 'Unknown User';
             default:
                 return 'Unknown';
         }
