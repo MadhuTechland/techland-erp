@@ -91,8 +91,8 @@ class TaskReminderTemplate extends Model
         $replacements = [
             '{Name}' => $user->name,
             '{FirstName}' => $firstName,
-            '{Date}' => now()->format('l, F j, Y'),
-            '{Day}' => now()->format('l'),
+            '{Date}' => now()->format('F j, Y'),   // January 22, 2026
+            '{Day}' => now()->format('l'),          // Thursday
             '{TaskCount}' => $taskData['count'] ?? 0,
             '{TaskNames}' => $taskNames ?: 'No tasks',
             '{Time}' => now()->format('g:i A'),
