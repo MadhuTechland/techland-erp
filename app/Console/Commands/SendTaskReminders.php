@@ -187,14 +187,26 @@ class SendTaskReminders extends Command
     }
 
     /**
-     * Check if user has no tasks assigned for today
+     * Check if user has no tasks in "In Progress" stage today
      */
     private function checkNoTaskAssigned(User $user, $creatorId): bool
     {
-        $today = now()->toDateString();
+        // Find "In Progress" stage
+        $inProgressStage = TaskStage::where('name', 'In Progress')
+            ->where(function ($q) use ($creatorId) {
+                $q->where('created_by', $creatorId)
+                    ->orWhere('created_by', 0);
+            })
+            ->first();
 
-        // Check if user has any tasks assigned (active, not completed)
+        if (!$inProgressStage) {
+            // If no In Progress stage exists, consider user has no tasks in progress
+            return true;
+        }
+
+        // Check if user has any tasks in "In Progress" stage
         $taskCount = ProjectTask::where('created_by', $creatorId)
+            ->where('stage_id', $inProgressStage->id)
             ->where(function ($query) use ($user) {
                 $query->where('assign_to', $user->id)
                     ->orWhere('assign_to', 'LIKE', $user->id . ',%')
@@ -204,6 +216,7 @@ class SendTaskReminders extends Command
             ->where('is_complete', 0)
             ->count();
 
+        // Return true if user has NO tasks in progress (should send reminder)
         return $taskCount === 0;
     }
 
