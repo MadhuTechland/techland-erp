@@ -560,6 +560,37 @@
         .bug-list {
             min-height: 30px;
         }
+
+        /* Clickable card styles */
+        .task-card,
+        .bug-card {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .task-card::after,
+        .bug-card::after {
+            content: '\eb1c';
+            font-family: 'tabler-icons';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .task-card:hover::after,
+        .bug-card:hover::after {
+            opacity: 1;
+        }
+
+        .task-card.gu-mirror::after,
+        .bug-card.gu-mirror::after {
+            display: none;
+        }
     </style>
 @endpush
 
@@ -1143,6 +1174,95 @@
                     show_toastr('success', 'Sprint completed successfully', 'success');
                     location.reload();
                 });
+            });
+
+            // Task card click - View/Edit task
+            var isDragging = false;
+            var dragStartTime = 0;
+
+            // Track drag state
+            drakeTask.on('drag', function() {
+                isDragging = true;
+                dragStartTime = Date.now();
+            });
+            drakeTask.on('dragend', function() {
+                setTimeout(function() {
+                    isDragging = false;
+                }, 100);
+            });
+
+            drakeBug.on('drag', function() {
+                isDragging = true;
+                dragStartTime = Date.now();
+            });
+            drakeBug.on('dragend', function() {
+                setTimeout(function() {
+                    isDragging = false;
+                }, 100);
+            });
+
+            // Click handler for task cards
+            $(document).on('click', '.task-card', function(e) {
+                // Don't open if clicking on story points badge
+                if ($(e.target).closest('.story-points-badge').length > 0) {
+                    return;
+                }
+
+                // Don't open if was dragging
+                if (isDragging || (Date.now() - dragStartTime) < 200) {
+                    return;
+                }
+
+                var viewUrl = $(this).data('view-url');
+                if (viewUrl) {
+                    // Open in ajax popup
+                    var $this = $(this);
+                    var popupSize = 'xl';
+                    var title = '{{ __("View Task") }}';
+
+                    $.ajax({
+                        url: viewUrl,
+                        success: function(data) {
+                            $('#commonModal .modal-title').text(title);
+                            $('#commonModal .modal-dialog').addClass('modal-' + popupSize);
+                            $('#commonModal .modal-body').html(data);
+                            $('#commonModal').modal('show');
+                        },
+                        error: function() {
+                            show_toastr('error', '{{ __("Error loading task") }}', 'error');
+                        }
+                    });
+                }
+            });
+
+            // Click handler for bug cards
+            $(document).on('click', '.bug-card', function(e) {
+                // Don't open if clicking on story points badge
+                if ($(e.target).closest('.story-points-badge').length > 0) {
+                    return;
+                }
+
+                // Don't open if was dragging
+                if (isDragging || (Date.now() - dragStartTime) < 200) {
+                    return;
+                }
+
+                var viewUrl = $(this).data('view-url');
+                if (viewUrl) {
+                    // Open in ajax popup
+                    $.ajax({
+                        url: viewUrl,
+                        success: function(data) {
+                            $('#commonModal .modal-title').text('{{ __("View Bug") }}');
+                            $('#commonModal .modal-dialog').addClass('modal-xl');
+                            $('#commonModal .modal-body').html(data);
+                            $('#commonModal').modal('show');
+                        },
+                        error: function() {
+                            show_toastr('error', '{{ __("Error loading bug") }}', 'error');
+                        }
+                    });
+                }
             });
         });
     </script>

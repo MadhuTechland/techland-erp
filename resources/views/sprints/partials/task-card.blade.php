@@ -1,6 +1,8 @@
 <div class="task-card priority-{{ $task->priority ?? 'medium' }}"
      data-task-id="{{ $task->id }}"
-     data-story-points="{{ $task->story_points ?? 0 }}">
+     data-story-points="{{ $task->story_points ?? 0 }}"
+     data-view-url="{{ route('projects.tasks.show', [$task->project_id, $task->id]) }}"
+     data-edit-url="{{ route('projects.tasks.edit', [$task->project_id, $task->id]) }}">
     <div class="task-card-header">
         <div class="task-card-title">
             @if($task->issueType)

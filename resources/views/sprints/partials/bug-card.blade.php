@@ -1,6 +1,7 @@
 <div class="bug-card severity-{{ $bug->severity ?? 'minor' }}"
      data-bug-id="{{ $bug->id }}"
-     data-story-points="{{ $bug->story_points ?? 0 }}">
+     data-story-points="{{ $bug->story_points ?? 0 }}"
+     data-view-url="{{ route('task.bug.show', [$bug->project_id, $bug->id]) }}">
     <div class="bug-card-header">
         <div class="bug-card-title">
             <span class="bug-icon">
