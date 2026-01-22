@@ -372,12 +372,33 @@
 
         .sprint-items {
             min-height: 80px;
+            max-height: 400px;
+            overflow-y: auto;
             padding: 12px;
             background: #fafafa;
         }
 
         .sprint-items.collapsed {
             display: none;
+        }
+
+        /* Custom scrollbar for sprint items */
+        .sprint-items::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sprint-items::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 3px;
+        }
+
+        .sprint-items::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 3px;
+        }
+
+        .sprint-items::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
 
         /* Story Points Dropdown */
